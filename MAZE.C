@@ -195,18 +195,20 @@ void load_graphics()
 
 void enemy_movement(struct Enemy* p_enemy)
 {
-	
-    uint8_t en_new_y = p_enemy->y;
-    uint8_t en_new_x = p_enemy->x;
+    uint8_t en_new_y;
+    uint8_t en_new_x;
 
     if (p_enemy->direction == 1) /*up*/
-        p_enemy->y -= 1;
+        p_enemy->y = p_enemy->y - 1;
     else if (p_enemy->direction == 2) /*left*/
-        p_enemy->x -= 1;
+        p_enemy->x = p_enemy->x - 1;
     else if (p_enemy->direction == 3) /*down*/
-        p_enemy->y ++;
+        p_enemy->y = p_enemy->y + 1;
     else if (p_enemy->direction == 4) /*right*/
-        p_enemy->x ++;
+        p_enemy->x = p_enemy->x + 1;
+	
+	en_new_y = p_enemy->y;
+	en_new_x = p_enemy->x;
 
 		if (level01[en_new_y * width + en_new_x] == 'W')
 			{
@@ -261,6 +263,14 @@ void main()
     uint8_t new_y = player_y;
 	uint8_t new_game;
 	
+	Guard1.x = 4;
+	Guard1.y = 4;
+	Guard1.direction = 2;
+		
+	Guard2.x = 7;
+	Guard2.y = 2;
+	Guard2.direction = 1;
+	
 	set_mode(VGA_256_COLOR_MODE);       /* set the video mode. */
 	
 	load_graphics();
@@ -268,15 +278,7 @@ void main()
     render_maze();
     
     while(game_running == 1)
-    {		
-		Guard1.x = 4;
-		Guard1.y = 4;
-		Guard1.direction = 2;
-		
-		Guard2.x = 7;
-		Guard2.y = 2;
-		Guard2.direction = 1;
-		
+    {				
 		draw_enemy(&Guard1);
 		draw_enemy(&Guard2);
         
@@ -302,7 +304,7 @@ void main()
 				level01[new_y * width + new_x] = 250;
 				player_y = new_y;
 				player_x = new_x;
-				render_maze();
+				//render_maze();
 				draw_sprite(player_x * TILE_WIDTH,player_y * TILE_HEIGHT,player_sprite);
 			}
 			else
@@ -338,11 +340,8 @@ void main()
 					game_running = 0;
 			}
 		}
-		if (game_running == 1)
-		{
-			enemy_movement(&Guard1);
-			enemy_movement(&Guard2);	
-		}
+		enemy_movement(&Guard1);
+		enemy_movement(&Guard2);
         ticker(0.01);
     }
 	set_mode(TEXT_MODE);
