@@ -129,7 +129,36 @@ void draw_sprite(int x, int y, uint8_t* sprite)
 	index_y = 0;
 }
 
-void render_maze()
+void draw_sprite_tr(int x, int y, uint8_t* sprite)
+{
+	uint8_t index_x = 0;
+	uint8_t index_y = 0;
+	uint8_t i = 0;
+
+	for (index_y=0;index_y<TILE_HEIGHT;index_y++)
+	{
+		for (index_x=0;index_x<TILE_WIDTH;index_x++)
+		{
+			if (sprite[i] != 13)
+			{
+				VGA[y*SCREEN_WIDTH+x]=sprite[i];
+				i++;
+				x++;
+			}
+			else
+			{
+				i++;
+				x++;
+			}
+		}
+		index_x = 0;
+        x = x - TILE_WIDTH;
+		y++;
+	}
+	index_y = 0;
+}
+
+void render_maze(uint8_t player_y, uint8_t player_x)
 {   
     uint16_t counter = 0;
     uint8_t y = 0;
@@ -141,25 +170,38 @@ void render_maze()
         {
 			if (level01[counter] == 87)
 				draw_sprite(x * TILE_WIDTH,y * TILE_HEIGHT,brick_wall);
-			if (level01[counter] == 45)
+			else if (level01[counter] == 45)
 				draw_sprite(x * TILE_WIDTH,y * TILE_HEIGHT,floor_sprite);
-			if (level01[counter] == 94)
-				draw_sprite(x * TILE_WIDTH,y * TILE_HEIGHT,mine_sprite);
-			if (level01[counter] == 42)
-				draw_sprite(x * TILE_WIDTH,y * TILE_HEIGHT,key_sprite);
-			if (level01[counter] == 124)
-				draw_sprite(x * TILE_WIDTH,y * TILE_HEIGHT,door_c_sprite);
-			if (level01[counter] == 250)
-				draw_sprite(x * TILE_WIDTH,y * TILE_HEIGHT,door_o_sprite);
-			if (level01[counter] == 101)
+			else if (level01[counter] == 94)
+			{
+				draw_sprite(x * TILE_WIDTH,y * TILE_HEIGHT,floor_sprite);
+				draw_sprite_tr(x * TILE_WIDTH,y * TILE_HEIGHT,mine_sprite);
+			}
+			else if (level01[counter] == 42)
+			{
+				draw_sprite(x * TILE_WIDTH,y * TILE_HEIGHT,floor_sprite);
+				draw_sprite_tr(x * TILE_WIDTH,y * TILE_HEIGHT,key_sprite);
+			}
+			else if (level01[counter] == 124)
+			{
+				draw_sprite(x * TILE_WIDTH,y * TILE_HEIGHT,floor_sprite);
+				draw_sprite_tr(x * TILE_WIDTH,y * TILE_HEIGHT,door_c_sprite);
+			}
+			else if (level01[counter] == 250)
+			{
+				draw_sprite(x * TILE_WIDTH,y * TILE_HEIGHT,floor_sprite);
+				draw_sprite_tr(x * TILE_WIDTH,y * TILE_HEIGHT,door_o_sprite);
+			}
+			else if (level01[counter] == 101)
 				draw_sprite(x * TILE_WIDTH,y * TILE_HEIGHT,exit_sprite);
 				
-            counter = counter + 1;
-            x = x + 1;
+            counter = counter++;
+            x = x++;
         }
-        y = y + 1;
+        y = y++;
         x = 0;
     }
+	draw_sprite_tr(player_x * TILE_WIDTH,player_y * TILE_HEIGHT,player_sprite);
 }
 
 void save_sprite(char* filename, uint8_t* source_data, uint16_t data_size)
@@ -195,20 +237,17 @@ void load_graphics()
 
 void enemy_movement(struct Enemy* p_enemy)
 {
-    uint8_t en_new_y;
-    uint8_t en_new_x;
+    uint8_t en_new_y = p_enemy->y;
+    uint8_t en_new_x = p_enemy->x;
 
     if (p_enemy->direction == 1) /*up*/
-        p_enemy->y = p_enemy->y - 1;
+        en_new_y = p_enemy->y - 1;
     else if (p_enemy->direction == 2) /*left*/
-        p_enemy->x = p_enemy->x - 1;
+        en_new_x = p_enemy->x - 1;
     else if (p_enemy->direction == 3) /*down*/
-        p_enemy->y = p_enemy->y + 1;
+        en_new_y = p_enemy->y + 1;
     else if (p_enemy->direction == 4) /*right*/
-        p_enemy->x = p_enemy->x + 1;
-	
-	en_new_y = p_enemy->y;
-	en_new_x = p_enemy->x;
+        en_new_x = p_enemy->x + 1;
 
 		if (level01[en_new_y * width + en_new_x] == 'W')
 			{
@@ -236,11 +275,11 @@ void enemy_movement(struct Enemy* p_enemy)
 		
 	p_enemy->y = en_new_y;
 	p_enemy->x = en_new_x;
-	draw_sprite(p_enemy->x * TILE_WIDTH,p_enemy->y * TILE_HEIGHT,guard_sprite);
+	draw_sprite_tr(p_enemy->x * TILE_WIDTH,p_enemy->y * TILE_HEIGHT,guard_sprite);
 	
 	if (player_y == p_enemy->y && player_x == p_enemy->x)
 	{
-		draw_sprite(player_x * TILE_WIDTH,player_y * TILE_HEIGHT,grave_sprite);
+		draw_sprite_tr(player_x * TILE_WIDTH,player_y * TILE_HEIGHT,grave_sprite);
 		getch();
 		game_running = 0;
 		//new_game = end_game(2);
@@ -249,7 +288,7 @@ void enemy_movement(struct Enemy* p_enemy)
 
 void draw_enemy(struct Enemy* p_enemy)
 {
-	draw_sprite(p_enemy->x * TILE_WIDTH,p_enemy->y * TILE_HEIGHT,guard_sprite);
+	draw_sprite_tr(p_enemy->x * TILE_WIDTH,p_enemy->y * TILE_HEIGHT,guard_sprite);
 }
 
 void main()
@@ -275,12 +314,12 @@ void main()
 	
 	load_graphics();
     
-    render_maze();
+    render_maze(player_y, player_x);
     
     while(game_running == 1)
     {				
-		draw_enemy(&Guard1);
-		draw_enemy(&Guard2);
+		//draw_enemy(&Guard1);
+		//draw_enemy(&Guard2);
         
         if (kbhit())
         {
@@ -296,32 +335,36 @@ void main()
                 new_x = player_x + 1;
             else if (movement == 27) /*ESC*/
                 game_running = 0;
+			else if (movement == 99) /*c*/
+                key_acquired = 1;
         }
         if (level01[new_y * width + new_x] != 'W')
         {
-			if (level01[new_y * width + new_x] == 124 && key_acquired == 1)
+			if (level01[new_y * width + new_x] == 124 && key_acquired == 0)
+			{
+				new_y = player_y;
+				new_x = player_x;
+			}
+			else if (level01[new_y * width + new_x] == 124 && key_acquired == 1)
 			{
 				level01[new_y * width + new_x] = 250;
 				player_y = new_y;
 				player_x = new_x;
-				//render_maze();
-				draw_sprite(player_x * TILE_WIDTH,player_y * TILE_HEIGHT,player_sprite);
 			}
 			else
             {
 				player_y = new_y;
 				player_x = new_x;
-				render_maze();
-				draw_sprite(player_x * TILE_WIDTH,player_y * TILE_HEIGHT,player_sprite);
-			
-				if (level01[player_y * width + player_x] == 42)
+				
+			    if (level01[player_y * width + player_x] == 42)
                 {
                     key_acquired = 1;
 					level01[player_y * width + player_x] = 45;
                 }
                 else if (level01[player_y * width + player_x] == 94)
                 {
-					draw_sprite(player_x * TILE_WIDTH,player_y * TILE_HEIGHT,expl_sprite);
+					render_maze(player_y, player_x);
+					draw_sprite_tr(player_x * TILE_WIDTH,player_y * TILE_HEIGHT,expl_sprite);
 					draw_enemy(&Guard1);
 					draw_enemy(&Guard2);
 					getch();
@@ -330,6 +373,7 @@ void main()
                 }
 				else if (level01[player_y * width + player_x] == 101)
                 {
+					render_maze(player_y, player_x);
 					draw_enemy(&Guard1);
 					draw_enemy(&Guard2);
 					getch();	
@@ -340,9 +384,13 @@ void main()
 					game_running = 0;
 			}
 		}
-		enemy_movement(&Guard1);
-		enemy_movement(&Guard2);
-        ticker(0.01);
+		if (game_running == 1)
+		{
+			render_maze(player_y, player_x);
+			enemy_movement(&Guard1);
+			enemy_movement(&Guard2);
+			ticker(0.01);
+		}
     }
 	set_mode(TEXT_MODE);
 	return;
