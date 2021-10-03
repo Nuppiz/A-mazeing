@@ -40,12 +40,8 @@ uint8_t level01[] =
     "W--^---WeW"
     "WWWWWWWWWW";
  
-int player_y = 6;
-int player_x = 5;
-
-/*int enemy_y = 4;
-int enemy_x = 4;
-int direction = 2;*/
+uint8_t player_y = 6;
+uint8_t player_x = 5;
 
 uint8_t brick_wall[TILE_AREA];
 uint8_t player_sprite[TILE_AREA];
@@ -61,10 +57,52 @@ uint8_t grave_sprite[TILE_AREA];
 
 struct Enemy
 {
-  uint8_t x;
-  uint8_t y;
-  uint8_t direction;
+	uint8_t x;
+	uint8_t y;
+	int8_t direction;
 };
+
+/*enum LVL_DATA
+{
+	TITLE,
+	WIDTH,
+	HEIGHT, 
+	AREA,
+	PLR_X,
+	PLR_Y,
+	NUM_ENEMIES,
+	LVL_PARAM
+};
+
+struct Level
+{
+	uint8_t name, w, h, px, py, num_enemies;
+	uint16_t area
+	uint16_t* grid;
+	struct Enemy* enemies;
+};
+
+struct Level LevelData[LVL_PARAM];
+
+void load_level(struct Level* p_LevelData, int level_id, char* filename)
+{
+	uint8_t i_en = 0;
+	
+    FILE* file_ptr;
+    file_ptr = fopen(filename, "r");
+	fscanf(file_ptr, "%s, %d, %d, %d, %d, %d", &p_LevelData[level_id]->name, &p_LevelData[level_id]->w, &p_LevelData[level_id]->h,
+	&p_LevelData[level_id]->px, &p_LevelData[level_id]->py, &p_LevelData[level_id]->num_enemies)
+	
+	for (i_en=0;i_en<p_LevelData[level_id].num_enemies;i_en++)
+	{
+		
+	}
+	
+	p_LevelData[level_id].area = p_LevelData[level_id].w * p_LevelData[level_id].h;
+	
+    fread(grid, 1, p_LevelData[level_id].area, file_ptr);
+    fclose(file_ptr);
+}*/
 
 void ticker(float seconds)
 {
@@ -222,61 +260,57 @@ void load_sprite(char* filename, uint8_t* source_data, uint16_t data_size)
 
 void load_graphics()
 {
-	load_sprite("FLOOR.TEX", floor_sprite, 64);
-	load_sprite("BRICKS.TEX", brick_wall, 64);
-	load_sprite("PLAYER.TEX", player_sprite, 64);
-	load_sprite("GUARD.TEX", guard_sprite, 64);
-	load_sprite("KEY.TEX", key_sprite, 64);
-	load_sprite("DOORC.TEX", door_c_sprite, 64);
-	load_sprite("DOORO.TEX", door_o_sprite, 64);
-	load_sprite("EXIT.TEX", exit_sprite, 64);
-	load_sprite("MINE.TEX", mine_sprite, 64);
-	load_sprite("EXPLO.TEX", expl_sprite, 64);
-	load_sprite("GRAVE.TEX", grave_sprite, 64);
+	load_sprite("FLOOR.7UP", floor_sprite, 64);
+	load_sprite("BRICKS.7UP", brick_wall, 64);
+	load_sprite("PLAYER.7UP", player_sprite, 64);
+	load_sprite("GUARD.7UP", guard_sprite, 64);
+	load_sprite("KEY.7UP", key_sprite, 64);
+	load_sprite("DOORC.7UP", door_c_sprite, 64);
+	load_sprite("DOORO.7UP", door_o_sprite, 64);
+	load_sprite("EXIT.7UP", exit_sprite, 64);
+	load_sprite("MINE.7UP", mine_sprite, 64);
+	load_sprite("EXPLO.7UP", expl_sprite, 64);
+	load_sprite("GRAVE.7UP", grave_sprite, 64);
 }
 
 void enemy_movement(struct Enemy* p_enemy)
 {
+	//temporary movement values are set to current position
     uint8_t en_new_y = p_enemy->y;
     uint8_t en_new_x = p_enemy->x;
 
+	//make a temporary move based on what direction value is given
     if (p_enemy->direction == 1) /*up*/
         en_new_y = p_enemy->y - 1;
     else if (p_enemy->direction == 2) /*left*/
         en_new_x = p_enemy->x - 1;
-    else if (p_enemy->direction == 3) /*down*/
+    else if (p_enemy->direction == -1) /*down*/
         en_new_y = p_enemy->y + 1;
-    else if (p_enemy->direction == 4) /*right*/
+    else if (p_enemy->direction == -2) /*right*/
         en_new_x = p_enemy->x + 1;
-
-		if (level01[en_new_y * width + en_new_x] == 'W')
-			{
-				if (p_enemy->direction == 1) /*up*/
-				{
-					p_enemy->direction = 3;
-					en_new_y = p_enemy->y + 1;
-				}
-				else if (p_enemy->direction == 2) /*left*/
-				{
-					p_enemy->direction = 4;
-					en_new_x = p_enemy->x + 1;
-				}
-				else if (p_enemy->direction == 3) /*down*/
-				{
-					p_enemy->direction = 1;
-					en_new_y = p_enemy->y - 1;
-				}
-				else if (p_enemy->direction == 4) /*right*/
-				{
-					p_enemy->direction = 2;
-					en_new_x = p_enemy->x - 1;
-				}
-			}
+	
+	//if the temporary movement would result in the enemy going inside of a wall, reverse the movement and direction
+	if (level01[en_new_y * width + en_new_x] == 'W')
+		{
+			if (p_enemy->direction == 1) /*up*/
+				en_new_y = p_enemy->y + 1;
+			else if (p_enemy->direction == 2) /*left*/
+				en_new_x = p_enemy->x + 1;
+			else if (p_enemy->direction == -1) /*down*/
+				en_new_y = p_enemy->y - 1;
+			else if (p_enemy->direction == -2) /*right*/
+				en_new_x = p_enemy->x - 1;
+		p_enemy->direction = -p_enemy->direction;
+		}
 		
+	//temporary movement values become the current movement values
 	p_enemy->y = en_new_y;
 	p_enemy->x = en_new_x;
+	
+	//draw enemy at the updated location
 	draw_sprite_tr(p_enemy->x * TILE_WIDTH,p_enemy->y * TILE_HEIGHT,guard_sprite);
 	
+	//if player and enemy are in the same square, kill the player
 	if (player_y == p_enemy->y && player_x == p_enemy->x)
 	{
 		draw_sprite_tr(player_x * TILE_WIDTH,player_y * TILE_HEIGHT,grave_sprite);
@@ -297,6 +331,7 @@ void main()
 	uint8_t key_acquired = 0;
 	struct Enemy Guard1;
 	struct Enemy Guard2;
+	//struct Level L1;
 	
 	uint8_t new_x = player_x;
     uint8_t new_y = player_y;
@@ -310,6 +345,15 @@ void main()
 	Guard2.y = 2;
 	Guard2.direction = 1;
 	
+	/*L1.w = 10;
+	L1.h = 10;
+	L1.area = 100;
+	L1.px = 6;
+	L1.py = 5;
+	L1.num_enemies = 2;
+	L1.grid = malloc(L1.area * sizeof(uint8_t));
+	L1.enemies = malloc(L1.num_enemies * sizeof(struct Enemy));*/
+	
 	set_mode(VGA_256_COLOR_MODE);       /* set the video mode. */
 	
 	load_graphics();
@@ -317,10 +361,7 @@ void main()
     render_maze(player_y, player_x);
     
     while(game_running == 1)
-    {				
-		//draw_enemy(&Guard1);
-		//draw_enemy(&Guard2);
-        
+    {				        
         if (kbhit())
         {
             movement = getchar();
