@@ -23,6 +23,14 @@
 
 #define MAX_ENEMIES			10
 
+#define TILE_WALL			'W'
+#define TILE_FLOOR			'-'
+#define TILE_DOOR_C			'|'
+#define TILE_DOOR_O			'_'
+#define TILE_EXIT			'e'
+#define ITEM_KEY			'*'
+#define ITEM_MINE			'^'
+
 uint8_t far *EGA=(uint8_t *)0xA0000000L;        /* this points to video memory. */
 uint8_t far *VGA=(uint8_t *)0xA0000000L;        /* this points to video memory. */
 
@@ -70,25 +78,15 @@ void level_loader(char* levelname)
 	
 	level_file = fopen(levelname, "r");
     
-    if (level_file == NULL)
-    {
-        printf("Unable to open file: %s\n", levelname);
-        printf("Please check the file actually exists\n");
-        exit(EXIT_FAILURE);
-    }
-
-	while (c != EOF)
-    {
-		if (c != '\n')
-		{
-			level_data[i] = c;
-			i++;
-		}
-		c = fgetc(level_file);
-    }
+	if (level_file == NULL)
+	{
+		printf("Unable to open file: %s\n", levelname);
+		printf("Please check the file actually exists\n");
+		exit(EXIT_FAILURE);
+	}
 	
-    while ((c = fgetc(level_file)) != EOF)
-    {
+	while ((c = fgetc(level_file)) != EOF)
+	{
 		if (c == '$')
 		{
 			fscanf(level_file, "%s", buffer);
@@ -120,16 +118,15 @@ void level_loader(char* levelname)
 				}
 			}
 		}
-    }
-  
-    fclose(level_file);
+	}
+	fclose(level_file);
 }
 
 void ticker(float seconds)
 {
-    int milliseconds = 1000 * seconds;
-    time_t startTime = clock();
-    while(clock() < startTime + milliseconds);
+	int milliseconds = 1000 * seconds;
+	time_t startTime = clock();
+	while(clock() < startTime + milliseconds);
 }
 
 void set_mode(uint8_t mode)
@@ -185,7 +182,7 @@ void draw_sprite_tr(int x, int y, uint8_t* sprite)
 			}
 		}
 		index_x = 0;
-        x = x - TILE_WIDTH;
+		x = x - TILE_WIDTH;
 		y++;
 	}
 	index_y = 0;
@@ -193,64 +190,64 @@ void draw_sprite_tr(int x, int y, uint8_t* sprite)
 
 void render_maze(uint8_t player_y, uint8_t player_x)
 {   
-    uint16_t counter = 0;
-    uint8_t y = 0;
-    uint8_t x = 0;
+	uint16_t counter = 0;
+	uint8_t y = 0;
+	uint8_t x = 0;
     
-    while (y < height)
-    {
-        while (x < width)
-        {
-			if (level_data[counter] == 87)
+	while (y < height)
+	{
+		while (x < width)
+		{
+			if (level_data[counter] == TILE_WALL)
 				draw_sprite(x * TILE_WIDTH,y * TILE_HEIGHT,brick_wall);
-			else if (level_data[counter] == 45)
+			else if (level_data[counter] == TILE_FLOOR)
 				draw_sprite(x * TILE_WIDTH,y * TILE_HEIGHT,floor_sprite);
-			else if (level_data[counter] == 94)
+			else if (level_data[counter] == ITEM_MINE)
 			{
 				draw_sprite(x * TILE_WIDTH,y * TILE_HEIGHT,floor_sprite);
 				draw_sprite_tr(x * TILE_WIDTH,y * TILE_HEIGHT,mine_sprite);
 			}
-			else if (level_data[counter] == 42)
+			else if (level_data[counter] == ITEM_KEY)
 			{
 				draw_sprite(x * TILE_WIDTH,y * TILE_HEIGHT,floor_sprite);
 				draw_sprite_tr(x * TILE_WIDTH,y * TILE_HEIGHT,key_sprite);
 			}
-			else if (level_data[counter] == 124)
+			else if (level_data[counter] == TILE_DOOR_C)
 			{
 				draw_sprite(x * TILE_WIDTH,y * TILE_HEIGHT,floor_sprite);
 				draw_sprite_tr(x * TILE_WIDTH,y * TILE_HEIGHT,door_c_sprite);
 			}
-			else if (level_data[counter] == 250)
+			else if (level_data[counter] == TILE_DOOR_O)
 			{
 				draw_sprite(x * TILE_WIDTH,y * TILE_HEIGHT,floor_sprite);
 				draw_sprite_tr(x * TILE_WIDTH,y * TILE_HEIGHT,door_o_sprite);
 			}
-			else if (level_data[counter] == 101)
+			else if (level_data[counter] == TILE_EXIT)
 				draw_sprite(x * TILE_WIDTH,y * TILE_HEIGHT,exit_sprite);
 				
-            counter = counter++;
-            x = x++;
+			counter = counter++;
+			x = x++;
         }
-        y = y++;
-        x = 0;
+		y = y++;
+		x = 0;
     }
 	draw_sprite_tr(player_x * TILE_WIDTH,player_y * TILE_HEIGHT,player_sprite);
 }
 
 void save_sprite(char* filename, uint8_t* source_data, uint16_t data_size)
 {
-    FILE* file_ptr;
-    file_ptr = fopen(filename, "wb+");
-    fwrite(source_data, 1, data_size, file_ptr);
-    fclose(file_ptr);
+	FILE* file_ptr;
+	file_ptr = fopen(filename, "wb+");
+	fwrite(source_data, 1, data_size, file_ptr);
+	fclose(file_ptr);
 }
 
 void load_sprite(char* filename, uint8_t* source_data, uint16_t data_size)
 {
-    FILE* file_ptr;
-    file_ptr = fopen(filename, "rb");
-    fread(source_data, 1, data_size, file_ptr);
-    fclose(file_ptr);
+	FILE* file_ptr;
+	file_ptr = fopen(filename, "rb");
+	fread(source_data, 1, data_size, file_ptr);
+	fclose(file_ptr);
 }
 
 void load_graphics()
@@ -271,32 +268,32 @@ void load_graphics()
 void enemy_movement(struct Enemy* p_enemy)
 {
 	//temporary movement values are set to current position
-    uint8_t en_new_y = p_enemy->y;
-    uint8_t en_new_x = p_enemy->x;
+	uint8_t en_new_y = p_enemy->y;
+	uint8_t en_new_x = p_enemy->x;
 
 	//make a temporary move based on what direction value is given
-    if (p_enemy->direction == 1) /*up*/
-        en_new_y = p_enemy->y - 1;
-    else if (p_enemy->direction == 2) /*left*/
-        en_new_x = p_enemy->x - 1;
-    else if (p_enemy->direction == -1) /*down*/
-        en_new_y = p_enemy->y + 1;
-    else if (p_enemy->direction == -2) /*right*/
-        en_new_x = p_enemy->x + 1;
+	if (p_enemy->direction == 1) /*up*/
+		en_new_y = p_enemy->y - 1;
+	else if (p_enemy->direction == 2) /*left*/
+		en_new_x = p_enemy->x - 1;
+	else if (p_enemy->direction == -1) /*down*/
+		en_new_y = p_enemy->y + 1);
+	else if (p_enemy->direction == -2) /*right*/
+		en_new_x = p_enemy->x + 1;
 	
 	//if the temporary movement would result in the enemy going inside of a wall, reverse the movement and direction
 	if (level_data[en_new_y * width + en_new_x] == 'W')
-		{
-			if (p_enemy->direction == 1) /*up*/
-				en_new_y = p_enemy->y + 1;
-			else if (p_enemy->direction == 2) /*left*/
-				en_new_x = p_enemy->x + 1;
-			else if (p_enemy->direction == -1) /*down*/
-				en_new_y = p_enemy->y - 1;
-			else if (p_enemy->direction == -2) /*right*/
-				en_new_x = p_enemy->x - 1;
+	{
+		if (p_enemy->direction == 1) /*up*/
+			en_new_y = p_enemy->y + 1;
+		else if (p_enemy->direction == 2) /*left*/
+			en_new_x = p_enemy->x + 1;
+		else if (p_enemy->direction == -1) /*down*/
+			en_new_y = p_enemy->y - 1;
+		else if (p_enemy->direction == -2) /*right*/
+			en_new_x = p_enemy->x - 1;
 		p_enemy->direction = -p_enemy->direction;
-		}
+	}
 		
 	//temporary movement values become the current movement values
 	p_enemy->y = en_new_y;
@@ -326,7 +323,7 @@ void main()
 	uint8_t key_acquired = 0;
 	
 	uint8_t new_x = player_x;
-    uint8_t new_y = player_y;
+	uint8_t new_y = player_y;
 	uint8_t new_game;
 	
 	char buf[13];
@@ -342,29 +339,29 @@ void main()
 	
 	load_graphics();
     
-    render_maze(player_y, player_x);
+	render_maze(player_y, player_x);
     
-    while(game_running == 1)
-    {				        
-        if (kbhit())
-        {
-            movement = getchar();
+	while(game_running == 1)
+	{				        
+		if (kbhit())
+		{
+		movement = getchar();
  
-            if (movement == 119) /*w*/
-                new_y = player_y - 1;
-            else if (movement == 97) /*a*/
-                new_x = player_x - 1;
-            else if (movement == 115) /*s*/
-                new_y = player_y + 1;
-            else if (movement == 100) /*d*/
-                new_x = player_x + 1;
-            else if (movement == 27) /*ESC*/
-                game_running = 0;
+			if (movement == 119) /*w*/
+				new_y = player_y - 1;
+			else if (movement == 97) /*a*/
+				new_x = player_x - 1;
+			else if (movement == 115) /*s*/
+				new_y = player_y + 1;
+			else if (movement == 100) /*d*/
+				new_x = player_x + 1;
+			else if (movement == 27) /*ESC*/
+				game_running = 0;
 			else if (movement == 99) /*c*/
-                key_acquired = 1;
-        }
-        if (level_data[new_y * width + new_x] != 'W')
-        {
+				key_acquired = 1;
+        	}
+        	if (level_data[new_y * width + new_x] != 'W')
+		{
 			if (level_data[new_y * width + new_x] == 124 && key_acquired == 0)
 			{
 				new_y = player_y;
@@ -377,34 +374,32 @@ void main()
 				player_x = new_x;
 			}
 			else
-            {
-				player_y = new_y;
-				player_x = new_x;
+			{
+			player_y = new_y;
+			player_x = new_x;
 				
-			    if (level_data[player_y * width + player_x] == 42)
-                {
-                    key_acquired = 1;
+				if (level_data[player_y * width + player_x] == 42)
+				{
+					key_acquired = 1;
 					level_data[player_y * width + player_x] = 45;
-                }
-                else if (level_data[player_y * width + player_x] == 94)
-                {
+				}
+				else if (level_data[player_y * width + player_x] == 94)
+				{
 					render_maze(player_y, player_x);
 					draw_sprite_tr(player_x * TILE_WIDTH,player_y * TILE_HEIGHT,expl_sprite);
 					draw_enemy(&enemy_array);
-					//draw_enemy(&Guard2);
 					getch();
 					game_running = 0;
-                    //new_game = end_game(1);
-                }
+					//new_game = end_game(1);
+				}
 				else if (level_data[player_y * width + player_x] == 101)
-                {
+				{
 					render_maze(player_y, player_x);
 					draw_enemy(&enemy_array);
-					//draw_enemy(&Guard2);
 					getch();	
 					game_running = 0;
-                    //new_game = end_game(3);
-                }
+					//new_game = end_game(3);
+				}
 				if (new_game == 0)
 					game_running = 0;
 			}
@@ -413,10 +408,9 @@ void main()
 		{
 			render_maze(player_y, player_x);
 			enemy_movement(&enemy_array);
-			//enemy_movement(&Guard2);
 			ticker(0.01);
 		}
-    }
+	}
 	set_mode(TEXT_MODE);
 	return;
 }
