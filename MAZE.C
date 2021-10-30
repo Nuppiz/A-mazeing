@@ -23,19 +23,21 @@
 
 #define MAX_ENEMIES			10
 
-#define TILE_WALL			'W'
-#define TILE_FLOOR			'-'
-#define TILE_DOOR_C			'|'
-#define TILE_DOOR_O			'_'
-#define TILE_EXIT			'e'
-#define ITEM_KEY			'*'
-#define ITEM_MINE			'^'
+#define TILE_WALL			87
+#define TILE_FLOOR			45
+#define TILE_DOOR_C			124
+#define TILE_DOOR_O			250
+#define TILE_EXIT			101
+#define ITEM_KEY			42
+#define ITEM_MINE			94
 
 uint8_t far *EGA=(uint8_t *)0xA0000000L;        /* this points to video memory. */
 uint8_t far *VGA=(uint8_t *)0xA0000000L;        /* this points to video memory. */
 
-uint8_t width;
-uint8_t height;
+int width;
+int height;
+
+uint8_t enemy_count = 0;
 
 uint8_t game_running = 1;
 
@@ -44,8 +46,8 @@ uint8_t level_num = 1;
  
 uint8_t* level_data;
  
-uint8_t player_y;
-uint8_t player_x;
+int player_y;
+int player_x;
 
 uint8_t brick_wall[TILE_AREA];
 uint8_t player_sprite[TILE_AREA];
@@ -66,7 +68,16 @@ struct Enemy
 	int8_t direction;
 };
 
-struct Enemy* enemy_array[MAX_ENEMIES];
+struct Enemy enemy_array[MAX_ENEMIES];
+
+void set_mode(uint8_t mode)
+{
+	union REGS regs;
+
+	regs.h.ah = SET_MODE;
+	regs.h.al = mode;
+	int86(VIDEO_INT, &regs, &regs);
+}
 
 void level_loader(char* levelname)
 {
@@ -74,7 +85,6 @@ void level_loader(char* levelname)
 	char buffer[100];
 	char c;
 	uint16_t i = 0;
-	uint8_t enemy_count = 0;
 	
 	level_file = fopen(levelname, "r");
     
@@ -98,6 +108,14 @@ void level_loader(char* levelname)
 			{
 				fscanf(level_file, "%d %d", &player_y, &player_x);
 			}
+			else if (strcmp(buffer, "enemy") == 0)
+			{
+				if (enemy_count < MAX_ENEMIES)
+				{
+					fscanf(level_file, "%d %d %d", &enemy_array[enemy_count].x, &enemy_array[enemy_count].y, &enemy_array[enemy_count].direction);
+					enemy_count++;
+				}
+			}
 			else if (strcmp(buffer, "tiledata") == 0)
 			{
 				while ((c = fgetc(level_file)) != EOF)
@@ -105,16 +123,9 @@ void level_loader(char* levelname)
 					if (c != '\n')
 					{
 						level_data[i] = c;
+						printf("%c", c);
 						i++;
 					}
-				}
-			}
-			else if (strcmp(buffer, "enemy") == 0)
-			{
-				if (enemy_count < MAX_ENEMIES)
-				{
-					fscanf(level_file, "%d %d %d", &enemy_array[enemy_count]->x, &enemy_array[enemy_count]->y, &enemy_array[enemy_count]->direction);
-					enemy_count++;
 				}
 			}
 		}
@@ -122,20 +133,27 @@ void level_loader(char* levelname)
 	fclose(level_file);
 }
 
-void ticker(float seconds)
+void load_sprite(char* filename, uint8_t* source_data, uint16_t data_size)
 {
-	int milliseconds = 1000 * seconds;
-	time_t startTime = clock();
-	while(clock() < startTime + milliseconds);
+	FILE* file_ptr;
+	file_ptr = fopen(filename, "rb");
+	fread(source_data, 1, data_size, file_ptr);
+	fclose(file_ptr);
 }
 
-void set_mode(uint8_t mode)
+void load_graphics()
 {
-	union REGS regs;
-
-	regs.h.ah = SET_MODE;
-	regs.h.al = mode;
-	int86(VIDEO_INT, &regs, &regs);
+	load_sprite("FLOOR.7UP", floor_sprite, 64);
+	load_sprite("BRICKS.7UP", brick_wall, 64);
+	load_sprite("PLAYER.7UP", player_sprite, 64);
+	load_sprite("GUARD.7UP", guard_sprite, 64);
+	load_sprite("KEY.7UP", key_sprite, 64);
+	load_sprite("DOORC.7UP", door_c_sprite, 64);
+	load_sprite("DOORO.7UP", door_o_sprite, 64);
+	load_sprite("EXIT.7UP", exit_sprite, 64);
+	load_sprite("MINE.7UP", mine_sprite, 64);
+	load_sprite("EXPLO.7UP", expl_sprite, 64);
+	load_sprite("GRAVE.7UP", grave_sprite, 64);
 }
 
 void draw_sprite(int x, int y, uint8_t* sprite)
@@ -234,35 +252,19 @@ void render_maze(uint8_t player_y, uint8_t player_x)
 	draw_sprite_tr(player_x * TILE_WIDTH,player_y * TILE_HEIGHT,player_sprite);
 }
 
+void ticker(float seconds)
+{
+	int milliseconds = 1000 * seconds;
+	time_t startTime = clock();
+	while(clock() < startTime + milliseconds);
+}
+
 void save_sprite(char* filename, uint8_t* source_data, uint16_t data_size)
 {
 	FILE* file_ptr;
 	file_ptr = fopen(filename, "wb+");
 	fwrite(source_data, 1, data_size, file_ptr);
 	fclose(file_ptr);
-}
-
-void load_sprite(char* filename, uint8_t* source_data, uint16_t data_size)
-{
-	FILE* file_ptr;
-	file_ptr = fopen(filename, "rb");
-	fread(source_data, 1, data_size, file_ptr);
-	fclose(file_ptr);
-}
-
-void load_graphics()
-{
-	load_sprite("FLOOR.7UP", floor_sprite, 64);
-	load_sprite("BRICKS.7UP", brick_wall, 64);
-	load_sprite("PLAYER.7UP", player_sprite, 64);
-	load_sprite("GUARD.7UP", guard_sprite, 64);
-	load_sprite("KEY.7UP", key_sprite, 64);
-	load_sprite("DOORC.7UP", door_c_sprite, 64);
-	load_sprite("DOORO.7UP", door_o_sprite, 64);
-	load_sprite("EXIT.7UP", exit_sprite, 64);
-	load_sprite("MINE.7UP", mine_sprite, 64);
-	load_sprite("EXPLO.7UP", expl_sprite, 64);
-	load_sprite("GRAVE.7UP", grave_sprite, 64);
 }
 
 void enemy_movement(struct Enemy* p_enemy)
@@ -272,25 +274,25 @@ void enemy_movement(struct Enemy* p_enemy)
 	uint8_t en_new_x = p_enemy->x;
 
 	//make a temporary move based on what direction value is given
-	if (p_enemy->direction == 1) /*up*/
+	if (p_enemy->direction == 1)
 		en_new_y = p_enemy->y - 1;
-	else if (p_enemy->direction == 2) /*left*/
+	else if (p_enemy->direction == 2)
 		en_new_x = p_enemy->x - 1;
-	else if (p_enemy->direction == -1) /*down*/
-		en_new_y = p_enemy->y + 1);
-	else if (p_enemy->direction == -2) /*right*/
+	else if (p_enemy->direction == -1)
+		en_new_y = p_enemy->y + 1;
+	else if (p_enemy->direction == -2)
 		en_new_x = p_enemy->x + 1;
 	
 	//if the temporary movement would result in the enemy going inside of a wall, reverse the movement and direction
 	if (level_data[en_new_y * width + en_new_x] == 'W')
 	{
-		if (p_enemy->direction == 1) /*up*/
+		if (p_enemy->direction == 1)
 			en_new_y = p_enemy->y + 1;
-		else if (p_enemy->direction == 2) /*left*/
+		else if (p_enemy->direction == 2)
 			en_new_x = p_enemy->x + 1;
-		else if (p_enemy->direction == -1) /*down*/
+		else if (p_enemy->direction == -1)
 			en_new_y = p_enemy->y - 1;
-		else if (p_enemy->direction == -2) /*right*/
+		else if (p_enemy->direction == -2)
 			en_new_x = p_enemy->x - 1;
 		p_enemy->direction = -p_enemy->direction;
 	}
@@ -317,13 +319,33 @@ void draw_enemy(struct Enemy* p_enemy)
 	draw_sprite_tr(p_enemy->x * TILE_WIDTH,p_enemy->y * TILE_HEIGHT,guard_sprite);
 }
 
+void draw_enemies(struct Enemy enemy_array[])
+{
+	int i =0;
+	while (i < enemy_count)
+	{
+		draw_enemy(&enemy_array[i]);
+		i++;
+	}
+}
+
+void move_enemies(struct Enemy enemy_array[])
+{
+	int i =0;
+	while (i < enemy_count)
+	{
+		enemy_movement(&enemy_array[i]);
+		i++;
+	}
+}
+
 void main()
 {
 	uint8_t movement;
-	uint8_t key_acquired = 0;
+	uint8_t keys_acquired = 0;
 	
-	uint8_t new_x = player_x;
-	uint8_t new_y = player_y;
+	int new_x = player_x;
+	int new_y = player_y;
 	uint8_t new_game;
 	
 	char buf[13];
@@ -334,68 +356,68 @@ void main()
 	sprintf(buf, "level%d.txt", level_num);
 	filename = buf;
 	level_loader(filename);
-	
-	set_mode(VGA_256_COLOR_MODE);       /* set the video mode. */
+
+	set_mode(VGA_256_COLOR_MODE);       //set the video mode.
 	
 	load_graphics();
     
 	render_maze(player_y, player_x);
-    
+
 	while(game_running == 1)
 	{				        
 		if (kbhit())
 		{
-		movement = getchar();
- 
-			if (movement == 119) /*w*/
+			movement = getchar();
+	 
+			if (movement == 119) //w
 				new_y = player_y - 1;
-			else if (movement == 97) /*a*/
+			else if (movement == 97) //a
 				new_x = player_x - 1;
-			else if (movement == 115) /*s*/
+			else if (movement == 115) //s
 				new_y = player_y + 1;
-			else if (movement == 100) /*d*/
+			else if (movement == 100) //d
 				new_x = player_x + 1;
-			else if (movement == 27) /*ESC*/
+			else if (movement == 27) //ESC
 				game_running = 0;
-			else if (movement == 99) /*c*/
-				key_acquired = 1;
-        	}
-        	if (level_data[new_y * width + new_x] != 'W')
+			else if (movement == 99) //c
+				keys_acquired = 1;
+		}
+		if (level_data[new_y * width + new_x] != TILE_WALL)
 		{
-			if (level_data[new_y * width + new_x] == 124 && key_acquired == 0)
+			if (level_data[new_y * width + new_x] == TILE_DOOR_C && keys_acquired == 0)
 			{
 				new_y = player_y;
 				new_x = player_x;
 			}
-			else if (level_data[new_y * width + new_x] == 124 && key_acquired == 1)
+			else if (level_data[new_y * width + new_x] == TILE_DOOR_C && keys_acquired > 0)
 			{
-				level_data[new_y * width + new_x] = 250;
+				level_data[new_y * width + new_x] = TILE_DOOR_O;
 				player_y = new_y;
 				player_x = new_x;
 			}
 			else
 			{
-			player_y = new_y;
-			player_x = new_x;
+				player_y = new_y;
+				player_x = new_x;
 				
-				if (level_data[player_y * width + player_x] == 42)
+				if (level_data[player_y * width + player_x] == ITEM_KEY)
 				{
-					key_acquired = 1;
-					level_data[player_y * width + player_x] = 45;
+					keys_acquired++;
+					level_data[player_y * width + player_x] = TILE_FLOOR;
 				}
-				else if (level_data[player_y * width + player_x] == 94)
+				else if (level_data[player_y * width + player_x] == ITEM_MINE)
 				{
 					render_maze(player_y, player_x);
 					draw_sprite_tr(player_x * TILE_WIDTH,player_y * TILE_HEIGHT,expl_sprite);
-					draw_enemy(&enemy_array);
+					draw_enemies(enemy_array);
 					getch();
 					game_running = 0;
 					//new_game = end_game(1);
 				}
-				else if (level_data[player_y * width + player_x] == 101)
+				else if (level_data[player_y * width + player_x] == TILE_EXIT)
 				{
 					render_maze(player_y, player_x);
-					draw_enemy(&enemy_array);
+					draw_enemies(enemy_array);
 					getch();	
 					game_running = 0;
 					//new_game = end_game(3);
@@ -407,7 +429,7 @@ void main()
 		if (game_running == 1)
 		{
 			render_maze(player_y, player_x);
-			enemy_movement(&enemy_array);
+			move_enemies(enemy_array);
 			ticker(0.01);
 		}
 	}
