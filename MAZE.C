@@ -123,7 +123,7 @@ struct GameData
 	int level_num;
 	int level_width;
 	int level_height;
-	int player_lives;	
+	int8_t player_lives;	
 	int keys_acquired;
 	int actor_count;	
 
@@ -332,17 +332,17 @@ void control_end(struct GameData* g)
 void control_ingame(struct GameData* g)
 {
 	// Y axis / Up / Down
-	if (IS_PRESSED(KEY_UP))
+	if (IS_PRESSED(KEY_UP) && g->Actors[0].x_vel == 0)
 		g->Actors[0].y_vel = -1;
-	else if (IS_PRESSED(KEY_DOWN))
+	else if (IS_PRESSED(KEY_DOWN) && g->Actors[0].x_vel == 0)
 		g->Actors[0].y_vel = 1;
 	else
 		g->Actors[0].y_vel = 0;
 	
 	// X axis / Left / Right
-	if (IS_PRESSED(KEY_LEFT))
+	if (IS_PRESSED(KEY_LEFT) && g->Actors[0].y_vel == 0)
 		g->Actors[0].x_vel = -1;
-	else if (IS_PRESSED(KEY_RIGHT))
+	else if (IS_PRESSED(KEY_RIGHT) && g->Actors[0].y_vel == 0)
 		g->Actors[0].x_vel = 1;
 	else
 		g->Actors[0].x_vel = 0;
@@ -462,7 +462,7 @@ void player_hit_detect(struct GameData* g)
 		p->type = ACTOR_EXPLO;
 		g->player_lives--;
 		
-		if (g->player_lives < 1)
+		if (g->player_lives < 0)
 			g->game_state = GAME_OVER;
 		else
 			player_death(g);
@@ -849,8 +849,16 @@ void render(struct GameData* g)
         printf("LEVEL: %d", g->level_num);
 		set_cursor(16, 1);
         printf("KEYS: %d", g->keys_acquired);
-        set_cursor(30, 1);
-        printf("LIVES: %d", g->player_lives);
+		if (g->player_lives > -1)
+		{
+			set_cursor(30, 1);
+			printf("LIVES: %d", g->player_lives);
+		}
+		else
+		{
+			set_cursor(30, 1);
+			printf("LIVES: 0");
+		}
         
         render_offset_x = 0;
         render_offset_y = 0;
