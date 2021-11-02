@@ -475,15 +475,17 @@ void player_hit_detect(struct GameData* g)
 	else if (ACTOR_ON_TILE(p, TILE_DOOR_C))
 	{
 		// no keys; door remains closed, so cancel movement
-		if (g->keys_acquired == 0)
+		if (g->keys_acquired < 1)
 		{
 			p->x -= p->x_vel;
 			p->y -= p->y_vel;
 		}
 		// otherwise, we remain in the door tile and change tile to DOOR_O
 		else
+		{
 			SET_TILE(p->x, p->y, TILE_DOOR_O);
 			g->keys_acquired--;
+		}
 	}
 	// exit and win the level
 	else if (ACTOR_ON_TILE(p, TILE_EXIT))
