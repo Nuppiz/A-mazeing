@@ -2,9 +2,9 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <dos.h>
-//#include <conio.h>
+#include <conio.h>
 //#include <time.h>
-//#include <string.h>
+#include <string.h>
 
 #define VIDEO_INT           0x10      /* the BIOS video interrupt. */
 #define WRITE_DOT           0x0C      /* BIOS func to plot a pixel. */
@@ -15,6 +15,7 @@
 
 #define SCREEN_WIDTH        320       /* width in pixels */
 #define SCREEN_HEIGHT       200       /* height in pixels */
+#define SCREEN_SIZE 		(SCREEN_WIDTH*SCREEN_HEIGHT)
 #define NUM_COLORS          16        /* number of colors in EGA */
 
 //#define BYTE unsigned 		char
@@ -61,16 +62,22 @@
 #define GAME_OVER 			2
 #define GAME_WIN 			3
 #define GAME_END			4
+#define GAME_DEATH			5
 
 #define LAST_LEVEL			2
 
+#define PIT_FREQ            0x1234DD // programmable interveral timer (PIT) frequency for PC speaker
+
 // macros
-#define TILE_AT(x, y) 			g->level_data[y * g->level_width + x]
+#define TILE_AT(x, y)           g->level_data[(y) * g->level_width + (x)]
 #define ACTOR_ON_TILE(a, tile) 	g->level_data[a->y * g->level_width + a->x] == tile
-#define SET_TILE(x, y, tile)   	g->level_data[y * g->level_width + x] = tile
+#define SET_TILE(x, y, tile)   	TILE_AT(x, y) = tile
 
 // globals
 uint8_t far *VGA=(uint8_t *)0xA0000000L;        /* this points to video memory. */
+int render_offset_x = 0;
+int render_offset_y = 0;
+
 uint8_t kb_array[128];
 uint8_t kb_scan; // a keyboard interrupt will store a scan code in this variable
 uint8_t kb_queue[NUM_SCAN_QUE];
@@ -78,8 +85,10 @@ uint8_t kb_queue_head;
 uint8_t kb_queue_tail;
 unsigned char readch, oldreadch, extended; // needed for keyboard interrupt,
 // don't know what for lmao 
+uint16_t notes[11] = {277, 294, 311, 330, 349, 370, 392, 415, 440, 466, 494};
 
-// sprites
+// reserve memory for sprites
+uint8_t far splash_screen	[64000];
 uint8_t brick_wall		[TILE_AREA];
 uint8_t player_sprite	[TILE_AREA];
 uint8_t guard_sprite	[TILE_AREA];
@@ -92,6 +101,10 @@ uint8_t error_sprite	[TILE_AREA];
 uint8_t mine_sprite		[TILE_AREA];
 uint8_t expl_sprite		[TILE_AREA];
 uint8_t grave_sprite	[TILE_AREA];
+uint8_t shad_in_cor		[TILE_AREA];
+uint8_t shad_horz		[TILE_AREA];
+uint8_t shad_vert		[TILE_AREA];
+uint8_t shad_out_cor	[TILE_AREA];
 
 // structs
 union REGS regs;
@@ -111,7 +124,8 @@ struct GameData
 	uint8_t level_data[1000];	
 	int level_num;
 	int level_width;
-	int level_height;	
+	int level_height;
+	int player_lives;	
 	int keys_acquired;
 	int actor_count;	
 
@@ -120,9 +134,125 @@ struct GameData
 
 // function forward declarations / prototypes
 void level_loader(struct GameData* g);
+void render(struct GameData* g);
 
 // function definitions
-//void interrupt far keyhandler(void);
+void play_song()
+{
+    int i, counter;
+    
+    // init speaker
+    outportb(0x61, inportb(0x61) | 3);
+    outportb(0x43, 0xB6);
+    // loop through some notes, up...
+    for (i = 10; i <= 4000; i++)
+    {
+        counter = (PIT_FREQ / i); // calculate frequency
+        outportb(0x42, counter & 0xff); // LSB
+        outportb(0x42, counter >> 8); // MSB
+        delay(2); // wait for a bit
+    }
+    // down...
+    for (i = 4000; i >= 10; i--)
+    {
+        counter = (PIT_FREQ / i); // calculate frequency
+        outportb(0x42, counter & 0xff); // LSB
+        outportb(0x42, counter >> 8); // MSB
+        delay(2); // wait for a bit
+    }
+    // turn off the speaker
+    outportb(0x61, inportb(0x61) & (~3));
+    outportb(0x43, 0x00);
+}
+
+void end_song()
+{
+    int i, counter;
+    
+    // init speaker
+    outportb(0x61, inportb(0x61) | 3);
+    outportb(0x43, 0xB6);
+    // loop through some notes, up...
+    for (i = 10; i <= 1000; i++)
+    {
+        counter = (PIT_FREQ / i); // calculate frequency
+        outportb(0x42, counter & 0xff); // LSB
+        outportb(0x42, counter >> 8); // MSB
+        delay(2); // wait for a bit
+    }
+    // turn off the speaker
+    outportb(0x61, inportb(0x61) & (~3));
+    outportb(0x43, 0x00);
+}
+
+void sound_gameover()
+{
+    int i, counter;
+    
+    // init speaker
+    outportb(0x61, inportb(0x61) | 3);
+    outportb(0x43, 0xB6);
+    // loop through some notes, up...
+    for (i = 10; i <= 500; i++)
+    {
+        counter = (PIT_FREQ / i); // calculate frequency
+        outportb(0x42, counter & 0xff); // LSB
+        outportb(0x42, counter >> 8); // MSB
+        delay(2); // wait for a bit
+    }
+	// down...
+	for (i = 500; i >= 200; i--)
+    {
+        counter = (PIT_FREQ / i); // calculate frequency
+        outportb(0x42, counter & 0xff); // LSB
+        outportb(0x42, counter >> 8); // MSB
+        delay(2); // wait for a bit
+    }
+    // turn off the speaker
+    outportb(0x61, inportb(0x61) & (~3));
+    outportb(0x43, 0x00);
+}
+
+void sound_death()
+{
+    int i, counter;
+    
+    // init speaker
+    outportb(0x61, inportb(0x61) | 3);
+    outportb(0x43, 0xB6);
+    // loop through some notes, up...
+    for (i = 200; i <= 500; i++)
+    {
+        counter = (PIT_FREQ / i); // calculate frequency
+        outportb(0x42, counter & 0xff); // LSB
+        outportb(0x42, counter >> 8); // MSB
+        delay(2); // wait for a bit
+    }
+    // turn off the speaker
+    outportb(0x61, inportb(0x61) & (~3));
+    outportb(0x43, 0x00);
+}
+
+void sound_key()
+{
+    int i, counter;
+    
+    // init speaker
+    outportb(0x61, inportb(0x61) | 3);
+    outportb(0x43, 0xB6);
+    // loop through some notes, up...
+    for (i = 200; i <= 400; i++)
+    {
+        counter = (PIT_FREQ / i); // calculate frequency
+        outportb(0x42, counter & 0xff); // LSB
+        outportb(0x42, counter >> 8); // MSB
+        delay(2); // wait for a bit
+    }
+    // turn off the speaker
+    outportb(0x61, inportb(0x61) & (~3));
+    outportb(0x43, 0x00);
+}
+
 void interrupt far keyhandler()
 {
 	oldreadch = readch;
@@ -160,10 +290,29 @@ void init_keyboard()
 	memset(kb_array, 0, 128);
 }
 
+void deinit_keyboard()
+{
+   _disable(); _dos_setvect(0x9, oldkeyhandler); _enable();
+}
+
 void start_game(struct GameData* g)
 {
 	g->game_state = GAME_INGAME;
 	g->level_num = 1;
+	g->player_lives = 3;
+	level_loader(g);
+}
+
+void player_death(struct GameData* g)
+{
+	struct Actor* p = &g->Actors[0];
+	
+	render(g);
+	sound_death();
+	delay(1000);
+	
+	p->type = ACTOR_PLAYER;
+	g->game_state = GAME_INGAME;
 	level_loader(g);
 }
 
@@ -263,6 +412,12 @@ void process_input(struct GameData* g)
 		g->game_running = 0;
 }
 
+void set_cursor(int x, int y)
+{
+    // Escape code to set the cursor position
+    printf("%c[%d;%df", 0x1B, y+1, x+1);
+}
+
 void move_actors(struct GameData* g)
 {
 	int new_x, new_y;
@@ -299,14 +454,20 @@ void player_hit_detect(struct GameData* g)
 	// step on mine
 	if (ACTOR_ON_TILE(p, ITEM_MINE))
 	{
-		g->game_state = GAME_OVER;
 		p->type = ACTOR_EXPLO;
+		g->player_lives = g->player_lives-1;
+		
+		if (g->player_lives == 0)
+			g->game_state = GAME_OVER;
+		else
+			player_death(g);
 	}
 	// collect key
 	else if (ACTOR_ON_TILE(p, ITEM_KEY))
 	{
 		g->keys_acquired++;
 		SET_TILE(p->x, p->y, TILE_FLOOR);
+		sound_key();
 	}
 	// try to open door
 	else if (ACTOR_ON_TILE(p, TILE_DOOR_C))
@@ -334,6 +495,14 @@ void player_hit_detect(struct GameData* g)
 		{
 			g->game_state = GAME_OVER;
 			p->type = ACTOR_GRAVE;
+			g->player_lives = g->player_lives-1;
+			
+			if (g->player_lives == 0)
+				g->game_state = GAME_OVER;
+			else
+			{
+				player_death(g);
+			}
 			break;
 		}
 	}
@@ -350,26 +519,26 @@ void check_state(struct GameData* g)
 {
 	if (g->game_state == GAME_OVER)
 	{
-		delay(2000);
+		sound_gameover();
+		delay(1000);
 		g->game_state = GAME_MENU;
 	}
-	else if (g->game_state == GAME_WIN)
-	{
-		delay(2000);
-		
-		if (g->level_num == LAST_LEVEL)
-			g->game_state = GAME_END;
-		else
-		{
-			next_level(g);
-		}
-	}
-	else if (g->game_state == GAME_END)
-	{
-		;
-		//delay(5000);
-		// idk something lol
-	}
+    else if (g->game_state == GAME_WIN)
+    {
+        end_song();
+        delay(100);
+        
+        if (g->level_num == LAST_LEVEL)
+            g->game_state = GAME_END;
+        else
+            next_level(g);
+    }
+    else if (g->game_state == GAME_END)
+    {
+        end_song();
+        delay(100);
+        g->game_state = GAME_MENU;
+    }
 }
 
 void game_logic(struct GameData* g)
@@ -384,11 +553,14 @@ void game_logic(struct GameData* g)
 
 void set_mode(uint8_t mode)
 {
-	//union REGS regs;
-
 	regs.h.ah = SET_MODE;
 	regs.h.al = mode;
 	int86(VIDEO_INT, &regs, &regs);
+}
+
+void fill_screen(uint8_t color)
+{
+    _fmemset(VGA, color, SCREEN_SIZE);
 }
 
 void load_sprite(char* filename, uint8_t* source_data, uint16_t data_size)
@@ -399,51 +571,49 @@ void load_sprite(char* filename, uint8_t* source_data, uint16_t data_size)
 	fclose(file_ptr);
 }
 
-/*
-void save_sprite(char* filename, uint8_t* source_data, uint16_t data_size)
-{
-	FILE* file_ptr;
-	file_ptr = fopen(filename, "wb+");
-	fwrite(source_data, 1, data_size, file_ptr);
-	fclose(file_ptr);
-}
-*/
-
 void load_graphics()
 {
-	load_sprite("FLOOR.7UP", floor_sprite, 64);
-	load_sprite("BRICKS.7UP", brick_wall, 64);
-	load_sprite("PLAYER.7UP", player_sprite, 64);
-	load_sprite("GUARD.7UP", guard_sprite, 64);
-	load_sprite("KEY.7UP", key_sprite, 64);
-	load_sprite("DOORC.7UP", door_c_sprite, 64);
-	load_sprite("DOORO.7UP", door_o_sprite, 64);
-	load_sprite("EXIT.7UP", exit_sprite, 64);
-	load_sprite("ERROR.7UP", error_sprite, 64);
-	load_sprite("MINE.7UP", mine_sprite, 64);
-	load_sprite("EXPLO.7UP", expl_sprite, 64);
-	load_sprite("GRAVE.7UP", grave_sprite, 64);
+	load_sprite("GFX/SPLASH.7UP", splash_screen, 64000);
+	load_sprite("GFX/FLOOR.7UP", floor_sprite, 64);
+	load_sprite("GFX/BRICKS.7UP", brick_wall, 64);
+	load_sprite("GFX/PLAYER.7UP", player_sprite, 64);
+	load_sprite("GFX/GUARD.7UP", guard_sprite, 64);
+	load_sprite("GFX/KEY.7UP", key_sprite, 64);
+	load_sprite("GFX/DOORC.7UP", door_c_sprite, 64);
+	load_sprite("GFX/DOORO.7UP", door_o_sprite, 64);
+	load_sprite("GFX/EXIT.7UP", exit_sprite, 64);
+	load_sprite("GFX/ERROR.7UP", error_sprite, 64);
+	load_sprite("GFX/MINE.7UP", mine_sprite, 64);
+	load_sprite("GFX/EXPLO.7UP", expl_sprite, 64);
+	load_sprite("GFX/GRAVE.7UP", grave_sprite, 64);
+	load_sprite("GFX/SHAD_IC.7UP", shad_in_cor, 64);
+	load_sprite("GFX/SHAD_H.7UP", shad_horz, 64);
+	load_sprite("GFX/SHAD_V.7UP", shad_vert, 64);
+	load_sprite("GFX/SHAD_OC.7UP", shad_out_cor, 64);
 }
 
 void draw_sprite(int x, int y, uint8_t* sprite)
 {
-	uint8_t index_x = 0;
-	uint8_t index_y = 0;
-	uint8_t i = 0;
+    int index_x = 0;
+    int index_y = 0;
+    int i = 0;
 
-	for (index_y=0;index_y<TILE_HEIGHT;index_y++)
-	{
-		for (index_x=0;index_x<TILE_WIDTH;index_x++)
-		{
-			VGA[y*SCREEN_WIDTH+x]=sprite[i];
-			i++;
-			x++;
-		}
-		index_x = 0;
-        x = x - TILE_WIDTH;
-		y++;
-	}
-	index_y = 0;
+    x += render_offset_x;
+    y += render_offset_y;
+
+    for (index_y=0;index_y<TILE_HEIGHT;index_y++)
+    {
+        for (index_x=0;index_x<TILE_WIDTH;index_x++)
+        {
+            VGA[y*SCREEN_WIDTH+x]=sprite[i];
+            i++;
+            x++;
+        }
+        index_x = 0;
+        x -= TILE_WIDTH;
+        y++;
+    }
+    index_y = 0;
 }
 
 void draw_sprite_tr(int x, int y, uint8_t* sprite)
@@ -451,6 +621,9 @@ void draw_sprite_tr(int x, int y, uint8_t* sprite)
 	uint8_t index_x = 0;
 	uint8_t index_y = 0;
 	uint8_t i = 0;
+	
+	x += render_offset_x;
+    y += render_offset_y;
 
 	for (index_y=0;index_y<TILE_HEIGHT;index_y++)
 	{
@@ -475,6 +648,47 @@ void draw_sprite_tr(int x, int y, uint8_t* sprite)
 	index_y = 0;
 }
 
+void draw_big(int x, int y, int w, int h, uint8_t* sprite)
+{
+    int index_x = 0;
+    int index_y = 0;
+    int i = 0;
+
+    for (index_y=0; index_y<h;index_y++)
+    {
+        for (index_x=0; index_x<w;index_x++)
+        {
+            VGA[y*SCREEN_WIDTH+x]=sprite[i];
+            i++;
+            x++;
+        }
+        index_x = 0;
+        x -= w;
+        y++;
+    }
+    index_y = 0;
+}
+
+void draw_shadow(struct GameData* g, int x, int y)
+{    
+    int pixel_x = x*TILE_WIDTH;
+    int pixel_y = y*TILE_HEIGHT;
+	
+    if (TILE_AT(x-1, y-1) == TILE_WALL &&
+        TILE_AT(x,   y-1) == TILE_WALL &&
+        TILE_AT(x-1, y  ) == TILE_WALL)
+        draw_sprite_tr(pixel_x, pixel_y, shad_in_cor);
+        
+    else if (TILE_AT(x, y-1) == TILE_WALL)
+        draw_sprite_tr(pixel_x, pixel_y, shad_horz);
+    
+    else if (TILE_AT(x-1, y) == TILE_WALL)
+        draw_sprite_tr(pixel_x, pixel_y, shad_vert);
+    
+    else if (TILE_AT(x-1, y-1) == TILE_WALL)
+        draw_sprite_tr(pixel_x, pixel_y, shad_out_cor);
+}
+
 void render_maze(struct GameData* g)
 {   
 	int counter = 0;
@@ -488,25 +702,32 @@ void render_maze(struct GameData* g)
 			if (g->level_data[counter] == TILE_WALL)
 				draw_sprite		(x * TILE_WIDTH,y * TILE_HEIGHT,brick_wall);
 			else if (g->level_data[counter] == TILE_FLOOR)
+			{
 				draw_sprite		(x * TILE_WIDTH,y * TILE_HEIGHT,floor_sprite);
+				draw_shadow(g, x, y);
+			}
 			else if (g->level_data[counter] == ITEM_MINE)
 			{
 				draw_sprite		(x * TILE_WIDTH,y * TILE_HEIGHT,floor_sprite);
+				draw_shadow(g, x, y);
 				draw_sprite_tr	(x * TILE_WIDTH,y * TILE_HEIGHT,mine_sprite);
 			}
 			else if (g->level_data[counter] == ITEM_KEY)
 			{
 				draw_sprite		(x * TILE_WIDTH,y * TILE_HEIGHT,floor_sprite);
+				draw_shadow(g, x, y);
 				draw_sprite_tr	(x * TILE_WIDTH,y * TILE_HEIGHT,key_sprite);
 			}
 			else if (g->level_data[counter] == TILE_DOOR_C)
 			{
 				draw_sprite   	(x * TILE_WIDTH,y * TILE_HEIGHT,floor_sprite);
+				draw_shadow(g, x, y);
 				draw_sprite_tr	(x * TILE_WIDTH,y * TILE_HEIGHT,door_c_sprite);
 			}
 			else if (g->level_data[counter] == TILE_DOOR_O)
 			{
 				draw_sprite		(x * TILE_WIDTH,y * TILE_HEIGHT,floor_sprite);
+				draw_shadow(g, x, y);
 				draw_sprite_tr	(x * TILE_WIDTH,y * TILE_HEIGHT,door_o_sprite);
 			}
 			else if (g->level_data[counter] == TILE_EXIT)
@@ -533,8 +754,6 @@ void render_actors(struct GameData* g)
 		{
 			case ACTOR_PLAYER:	sprite = player_sprite;	break;
 			case ACTOR_GUARD:	sprite = guard_sprite;	break;
-			//case ACTOR_GRAVE:	sprite = grave_sprite;	break;
-			//case ACTOR_EXPLO:	sprite = expl_sprite;	break;
 			default:			sprite = error_sprite;	break;
 		}
 		
@@ -557,8 +776,6 @@ void render_actors(struct GameData* g)
 		
 		switch (g->Actors[i].type)
 		{
-			//case ACTOR_PLAYER:	sprite = player_sprite;	break;
-			//case ACTOR_GUARD:	sprite = guard_sprite;	break;
 			case ACTOR_GRAVE:	sprite = grave_sprite;	break;
 			case ACTOR_EXPLO:	sprite = expl_sprite;	break;
 			default:			sprite = error_sprite;	break;
@@ -580,18 +797,7 @@ void render_actors(struct GameData* g)
 
 void render_menu()
 {
-	clrscr();
-	draw_sprite(0, 0, exit_sprite); // change to menu gfx or text later
-	draw_sprite(0, 8, exit_sprite);
-	draw_sprite(0, 16, exit_sprite);
-	draw_sprite(0, 24, exit_sprite);
-	draw_sprite(8, 8, exit_sprite);
-	draw_sprite(16, 16, exit_sprite);
-	draw_sprite(24, 8, exit_sprite);
-	draw_sprite(32, 0, exit_sprite);
-	draw_sprite(32, 8, exit_sprite);
-	draw_sprite(32, 16, exit_sprite);
-	draw_sprite(32, 24, exit_sprite);
+	draw_big(0, 0, 320, 200, splash_screen); // change to menu gfx or text later
 }
 
 void render_end()
@@ -602,25 +808,49 @@ void render_end()
 
 void render(struct GameData* g)
 {
-	// in case playing, just died, or exited
-	// draw play field and objects
-	if (g->game_state == GAME_INGAME ||
-		g->game_state == GAME_OVER ||
-		g->game_state == GAME_WIN)
-	{
-		render_maze(g);
-		render_actors(g);
-	}
-	// if menu ...
-	else if (g->game_state == GAME_MENU)
-	{
-		render_menu();
-	}
-	// if end ...
-	else if (g->game_state == GAME_END)
-	{
-		render_end();
-	}
+	int screen_blanked = 0;
+    
+    // in case playing, just died, or exited
+    // draw play field and objects
+    if (g->game_state == GAME_INGAME ||
+        g->game_state == GAME_OVER ||
+        g->game_state == GAME_WIN)
+    {
+		if (screen_blanked == 0)
+		{
+			fill_screen(0);
+			screen_blanked = 1;
+		}
+
+        // centered on level
+        //render_offset_x = (SCREEN_WIDTH  - g->level_width *TILE_WIDTH) / 2;
+        //render_offset_y = (SCREEN_HEIGHT - g->level_height*TILE_HEIGHT) / 2;
+        
+        // centered on player
+        render_offset_x = SCREEN_WIDTH/2 - g->Actors[0].x*TILE_WIDTH;
+        render_offset_y = SCREEN_HEIGHT/2 -g->Actors[0].y*TILE_HEIGHT;
+        
+        render_maze(g);
+        render_actors(g);
+		
+		set_cursor(1,1);
+        printf("LEVEL: %d", g->level_num);
+        set_cursor(30, 1);
+        printf("LIVES: %d", g->player_lives);
+        
+        render_offset_x = 0;
+        render_offset_y = 0;
+    }
+    // if menu ...
+    else if (g->game_state == GAME_MENU)
+    {
+        render_menu();
+    }
+    // if end ...
+    else if (g->game_state == GAME_END)
+    {
+        render_end();
+    }
 }
 
 void init_gamedata(struct GameData* g)
@@ -638,7 +868,7 @@ void level_loader(struct GameData* g)
 	int i = 0;
 	
 	/* build filename and load it */
-	sprintf(filename, "level%d.txt", g->level_num);
+	sprintf(filename, "LEVELS/level%d.txt", g->level_num);
 	level_file = fopen(filename, "r");
     
 	if (level_file == NULL)
@@ -717,16 +947,13 @@ void init(struct GameData* g)
 	g->game_running = 1;
 	g->game_state = GAME_MENU;
 	
-	/* load level file */
-	//level_loader(g);
-	
 	/* init keyboard */
 	init_keyboard();
 }
 
 void quit()
 {
-	//deinit_keyboard();
+	deinit_keyboard();
 	set_mode(TEXT_MODE);
 }
 
