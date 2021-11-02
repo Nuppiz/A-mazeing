@@ -32,7 +32,9 @@
 #define KEY_LEFT			75
 #define KEY_RIGHT			77
 #define KEY_DOWN			80
-#define KEY_CHEAT  			46
+#define KEY_CHEAT_K  		46
+#define KEY_CHEAT_L			38
+#define KEY_CHEAT_D			37
 
 #define IS_HIT(k) 			(kb_array[k] & KEY_HIT)
 #define IS_REL(k) 			(kb_array[k] & KEY_REL)
@@ -347,8 +349,12 @@ void control_ingame(struct GameData* g)
 		g->Actors[0].x_vel = 0;
 	
 	// Misc
-	if (IS_HIT(KEY_CHEAT))
-		g->keys_acquired = 1;
+	if (IS_HIT(KEY_CHEAT_K))
+		g->keys_acquired++;
+	if (IS_HIT(KEY_CHEAT_L))
+		g->player_lives++;
+	if (IS_HIT(KEY_CHEAT_D))
+		g->player_lives--;
 }
 
 void get_keyboard()
@@ -455,9 +461,9 @@ void player_hit_detect(struct GameData* g)
 	if (ACTOR_ON_TILE(p, ITEM_MINE))
 	{
 		p->type = ACTOR_EXPLO;
-		g->player_lives = g->player_lives-1;
+		g->player_lives--;
 		
-		if (g->player_lives == 0)
+		if (g->player_lives < 1)
 			g->game_state = GAME_OVER;
 		else
 			player_death(g);
@@ -481,6 +487,7 @@ void player_hit_detect(struct GameData* g)
 		// otherwise, we remain in the door tile and change tile to DOOR_O
 		else
 			SET_TILE(p->x, p->y, TILE_DOOR_O);
+			g->keys_acquired--;
 	}
 	// exit and win the level
 	else if (ACTOR_ON_TILE(p, TILE_EXIT))
@@ -495,9 +502,9 @@ void player_hit_detect(struct GameData* g)
 		{
 			g->game_state = GAME_OVER;
 			p->type = ACTOR_GRAVE;
-			g->player_lives = g->player_lives-1;
+			g->player_lives--;
 			
-			if (g->player_lives == 0)
+			if (g->player_lives < 1)
 				g->game_state = GAME_OVER;
 			else
 			{
@@ -835,6 +842,8 @@ void render(struct GameData* g)
 		
 		set_cursor(1,1);
         printf("LEVEL: %d", g->level_num);
+		set_cursor(16, 1);
+        printf("KEYS: %d", g->keys_acquired);
         set_cursor(30, 1);
         printf("LIVES: %d", g->player_lives);
         
