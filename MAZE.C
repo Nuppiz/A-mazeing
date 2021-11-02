@@ -500,7 +500,6 @@ void player_hit_detect(struct GameData* g)
 		
 		if (p->x == enemy->x && p->y == enemy->y)
 		{
-			g->game_state = GAME_OVER;
 			p->type = ACTOR_GRAVE;
 			g->player_lives--;
 			
@@ -526,6 +525,8 @@ void check_state(struct GameData* g)
 {
 	if (g->game_state == GAME_OVER)
 	{
+		set_cursor(16, 11);
+		printf("GAME OVER");
 		sound_gameover();
 		delay(1000);
 		g->game_state = GAME_MENU;
