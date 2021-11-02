@@ -133,6 +133,7 @@ struct GameData
 // function forward declarations / prototypes
 void level_loader(struct GameData* g);
 void render(struct GameData* g);
+void fill_screen(uint8_t color);
 
 // function definitions
 void play_song()
@@ -295,6 +296,8 @@ void deinit_keyboard()
 
 void start_game(struct GameData* g)
 {
+	fill_screen(0);
+	
 	g->game_state = GAME_INGAME;
 	g->level_num = 1;
 	g->player_lives = 3;
@@ -310,7 +313,7 @@ void player_death(struct GameData* g)
 	delay(1000);
 	
 	p->type = ACTOR_PLAYER;
-	g->game_state = GAME_INGAME;
+	fill_screen(0);
 	level_loader(g);
 }
 
@@ -523,8 +526,8 @@ void check_state(struct GameData* g)
 {
 	if (g->game_state == GAME_OVER)
 	{
-		set_cursor(16, 11);
-		printf("GAME OVER");
+		set_cursor(15, 11);
+		printf("GAME OVER!");
 		sound_gameover();
 		delay(1000);
 		g->game_state = GAME_MENU;
@@ -541,7 +544,6 @@ void check_state(struct GameData* g)
     }
     else if (g->game_state == GAME_END)
     {
-		set_cursor(16, 11);
         end_song();
         delay(100);
         g->game_state = GAME_MENU;
@@ -816,27 +818,29 @@ void render_end()
 
 void render(struct GameData* g)
 {
-	int screen_blanked = 0;
-    
+	int level_oversized = 0; //will come back to this later
+	
     // in case playing, just died, or exited
     // draw play field and objects
     if (g->game_state == GAME_INGAME ||
         g->game_state == GAME_OVER ||
         g->game_state == GAME_WIN)
     {
-		if (screen_blanked == 0)
-		{
-			fill_screen(0);
-			screen_blanked = 1;
-		}
 
-        // centered on level
-        //render_offset_x = (SCREEN_WIDTH  - g->level_width *TILE_WIDTH) / 2;
-        //render_offset_y = (SCREEN_HEIGHT - g->level_height*TILE_HEIGHT) / 2;
+        //centered on level
+		if (level_oversized == 0)
+		{
+			render_offset_x = (SCREEN_WIDTH  - g->level_width *TILE_WIDTH) / 2;
+			render_offset_y = (SCREEN_HEIGHT - g->level_height*TILE_HEIGHT) / 2;
+		}
         
         // centered on player
-        render_offset_x = SCREEN_WIDTH/2 - g->Actors[0].x*TILE_WIDTH;
-        render_offset_y = SCREEN_HEIGHT/2 -g->Actors[0].y*TILE_HEIGHT;
+		else
+		{
+			fill_screen(0);
+			render_offset_x = SCREEN_WIDTH/2 - g->Actors[0].x*TILE_WIDTH;
+			render_offset_y = SCREEN_HEIGHT/2 -g->Actors[0].y*TILE_HEIGHT;
+		}
         
         render_maze(g);
         render_actors(g);
