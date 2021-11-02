@@ -2,9 +2,6 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <dos.h>
-#include <conio.h>
-//#include <time.h>
-#include <string.h>
 
 #define VIDEO_INT           0x10      /* the BIOS video interrupt. */
 #define WRITE_DOT           0x0C      /* BIOS func to plot a pixel. */
@@ -18,7 +15,6 @@
 #define SCREEN_SIZE 		(SCREEN_WIDTH*SCREEN_HEIGHT)
 #define NUM_COLORS          16        /* number of colors in EGA */
 
-//#define BYTE unsigned 		char
 #define NUM_SCAN_QUE 		256
 #define TICKS	    		(*(volatile unsigned long far *)(0x0040006CL))
 
@@ -543,6 +539,7 @@ void check_state(struct GameData* g)
     }
     else if (g->game_state == GAME_END)
     {
+		set_cursor(16, 11);
         end_song();
         delay(100);
         g->game_state = GAME_MENU;
@@ -810,8 +807,9 @@ void render_menu()
 
 void render_end()
 {
-	clrscr();
-	printf("the end lol");
+	fill_screen(0);
+	set_cursor(12, 11);
+	printf("A WINNER IS YOU");
 }
 
 void render(struct GameData* g)
