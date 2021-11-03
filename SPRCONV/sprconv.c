@@ -5,9 +5,7 @@
 char* inname;
 char* outname;
 uint8_t buffer [64];
-uint8_t far big_buffer [64000];
 uint16_t filesize = 0;
-uint8_t filetype = 0;
 
 void load_file(char* inname, int width)
 {
@@ -16,44 +14,36 @@ void load_file(char* inname, int width)
 	uint16_t i=0;
 	int j=0;
 	int lines=1;
-	uint16_t linescan=0;
 
 	printf("Loading file %s.", inname);
 
 	file_ptr = fopen(inname, "rb");
 
 	if (file_ptr == NULL)
-    	{
-		printf("Unable to open file: %s\n", inname);
-		printf("Please check the file actually exists\n");
-		exit(EXIT_FAILURE);
-        	// exit will terminate the program here, nothing further will happen
-    	}
-	
-	//fseek(file_ptr, 1078, SEEK_SET); // skip BMP file header and palette data
+	{
+	printf("Unable to open file: %s\n", inname);
+	printf("Please check the file actually exists\n");
+	exit(EXIT_FAILURE);
+	// exit will terminate the program here, nothing further will happen
+	}
 	
 	fseek(file_ptr, -width, SEEK_END);
 	
 	c = fgetc(file_ptr);
-    
+	
 	while (i < filesize)
 	{
-		if (filetype == 1)
-			big_buffer[j] = c;
-		else
-			buffer[j] = c;
+		buffer[j] = c;
 		i++;
-		linescan++;
-		if (linescan - width == 0)
+		if (i % width == 0)
 		{
 			lines++;
 			fseek(file_ptr, (-width*lines), SEEK_END);
-			linescan = 0;
 		}
 		c = fgetc(file_ptr);
 		j++;
 	}
-	
+		
 	printf("\nFile read successfully!\n");
 	fclose(file_ptr);
 	printf("\n");
@@ -77,20 +67,9 @@ void main()
 	outname = malloc(13);
 	printf("Enter file to convert:\n");
 	scanf("%s", inname);
-	printf("Is the file a 0) sprite or 1) menu background?\n");
-	scanf("%d", &filetype);
 	
-	if (filetype == 1)
-	{
-		width = 320;
-		height = 200;
-	}
-	
-	else 
-	{
-		width = 8;
-		height = 8;
-	}
+	width = 8;
+	height = 8;
 	
 	filesize = width*height;
 	printf("Total file size: %u bytes", filesize);
@@ -100,15 +79,8 @@ void main()
 	printf("Enter output name:\n");
 	scanf("%s", outname);
 	printf("\n");
-	if (filetype == 1)
-	{
-		save_file(outname, big_buffer, 64000);
-		printf("BMP converted to background successfully!");
-	}
-	else
-	{
-		save_file(outname, buffer, 64);
-		printf("BMP converted to sprite successfully!");
-	}
+
+	save_file(outname, buffer, 64);
+	printf("BMP converted to sprite successfully!");
 	getch();
 }
