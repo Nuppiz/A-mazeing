@@ -17,18 +17,18 @@ void load_file(char* inname, int width)
 	int j=0;
 	int lines=1;
 	uint16_t linescan=0;
-	
+
 	printf("Loading file %s.", inname);
-	
+
 	file_ptr = fopen(inname, "rb");
 
 	if (file_ptr == NULL)
-    {
-        printf("Unable to open file: %s\n", inname);
-        printf("Please check the file actually exists\n");
-        exit(EXIT_FAILURE);
-        // exit will terminate the program here, nothing further will happen
-    }
+    	{
+		printf("Unable to open file: %s\n", inname);
+		printf("Please check the file actually exists\n");
+		exit(EXIT_FAILURE);
+        	// exit will terminate the program here, nothing further will happen
+    	}
 	
 	//fseek(file_ptr, 1078, SEEK_SET); // skip BMP file header and palette data
 	
@@ -36,8 +36,8 @@ void load_file(char* inname, int width)
 	
 	c = fgetc(file_ptr);
     
-    while (i < filesize)
-    {
+	while (i < filesize)
+	{
 		if (filetype == 1)
 			big_buffer[j] = c;
 		else
@@ -50,9 +50,9 @@ void load_file(char* inname, int width)
 			fseek(file_ptr, (-width*lines), SEEK_END);
 			linescan = 0;
 		}
-        c = fgetc(file_ptr);
+		c = fgetc(file_ptr);
 		j++;
-    }
+	    }
 	
 	printf("\nFile read successfully!\n");
 	fclose(file_ptr);
