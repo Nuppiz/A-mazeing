@@ -12,7 +12,7 @@
 
 #define SCREEN_WIDTH        320       /* width in pixels */
 #define SCREEN_HEIGHT       200       /* height in pixels */
-#define SCREEN_SIZE 		(SCREEN_WIDTH*SCREEN_HEIGHT)
+#define SCREEN_SIZE 		SCREEN_WIDTH*SCREEN_HEIGHT
 #define NUM_COLORS          16        /* number of colors in EGA */
 
 #define NUM_SCAN_QUE 		256
@@ -62,7 +62,7 @@
 #define GAME_END			4
 #define GAME_DEATH			5
 
-#define LAST_LEVEL			2
+#define LAST_LEVEL			3
 
 #define PIT_FREQ            0x1234DD // programmable interveral timer (PIT) frequency for PC speaker
 
@@ -77,7 +77,6 @@ int render_offset_x = 0;
 int render_offset_y = 0;
 
 uint8_t kb_array[128];
-uint8_t kb_scan; // a keyboard interrupt will store a scan code in this variable
 uint8_t kb_queue[NUM_SCAN_QUE];
 uint8_t kb_queue_head;
 uint8_t kb_queue_tail;
@@ -277,7 +276,7 @@ void interrupt far keyhandler()
 		out 0x20, al
 	}
 	
-	kb_queue[kb_queue_tail++] = readch;//kb_scan;
+	kb_queue[kb_queue_tail++] = readch;
 }
 
 void (interrupt far *oldkeyhandler)();
@@ -415,6 +414,8 @@ void process_input(struct GameData* g)
 	// esc always exits, wherever you are
 	if (IS_HIT(KEY_ESC))
 		g->game_running = 0;
+	
+	clear_keys();
 }
 
 void set_cursor(int x, int y)
@@ -502,6 +503,7 @@ void player_hit_detect(struct GameData* g)
 		if (p->x == enemy->x && p->y == enemy->y)
 		{
 			p->type = ACTOR_GRAVE;
+			enemy->type = ACTOR_GRAVE;
 			g->player_lives--;
 			
 			if (g->player_lives < 1)
@@ -845,18 +847,18 @@ void render(struct GameData* g)
         render_maze(g);
         render_actors(g);
 		
-		set_cursor(1,1);
+		set_cursor(1,0);
         printf("LEVEL: %d", g->level_num);
-		set_cursor(16, 1);
+		set_cursor(16, 0);
         printf("KEYS: %d", g->keys_acquired);
 		if (g->player_lives > -1)
 		{
-			set_cursor(30, 1);
+			set_cursor(30, 0);
 			printf("LIVES: %d", g->player_lives);
 		}
 		else
 		{
-			set_cursor(30, 1);
+			set_cursor(30, 0);
 			printf("LIVES: 0");
 		}
         
@@ -992,7 +994,6 @@ int main()
 	{
 		process_input(&g);
 		game_logic(&g);
-		clear_keys();
 		render(&g);
 		//play_audio(&g);
 		delay(100);
