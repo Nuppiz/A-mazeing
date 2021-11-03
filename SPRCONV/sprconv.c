@@ -52,7 +52,7 @@ void load_file(char* inname, int width)
 		}
 		c = fgetc(file_ptr);
 		j++;
-	    }
+	}
 	
 	printf("\nFile read successfully!\n");
 	fclose(file_ptr);
