@@ -23,12 +23,11 @@ void load_file(char* inname, int width)
 
 	if (file_ptr == NULL)
 	{
-	printf("Unable to open file: %s\n", inname);
-	printf("Please check the file actually exists\n");
-	exit(EXIT_FAILURE);
-	// exit will terminate the program here, nothing further will happen
+		printf("Unable to open file: %s\n", inname);
+		printf("Please check the file actually exists\n");
+		exit(EXIT_FAILURE);
+		// exit will terminate the program here, nothing further will happen
 	}
-	
 	
 	fseek(file_ptr, -width, SEEK_END);
 	
