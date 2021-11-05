@@ -1,15 +1,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <string.h>
 
-char* inname;
-char* outname;
-uint8_t buffer [64];
-uint8_t big_buffer [64000];
+char inputname[13];
+char outputname[13];
+char inname[13];
+char outname[13];
+uint8_t* buffer;
 uint16_t filesize = 0;
-uint8_t filetype = 0;
+int width;
+int height;
+int checksum1;
+int checksum2;
 
-void load_file(char* inname, int width)
+void load_file(char* inname)
 {
 	FILE* file_ptr;
 	char c;
@@ -17,10 +22,11 @@ void load_file(char* inname, int width)
 	int j=0;
 	int lines=1;
 
-	printf("Loading file %s.", inname);
+	printf("Loading file %s...\n", inname);
 
 	file_ptr = fopen(inname, "rb");
-
+	
+	//check that the file actually exists
 	if (file_ptr == NULL)
 	{
 		printf("Unable to open file: %s\n", inname);
@@ -29,41 +35,51 @@ void load_file(char* inname, int width)
 		// exit will terminate the program here, nothing further will happen
 	}
 	
-	fseek(file_ptr, -width, SEEK_END);
+	fseek(file_ptr, 0, SEEK_SET);
+	fread(&checksum1, 2, 1, file_ptr); //check for BMP file header
+	fseek(file_ptr, 28, SEEK_SET);
+	fread(&checksum2, 1, 1, file_ptr); // check bit depth
 	
-	c = fgetc(file_ptr);
-    
-	
-	if (filetype == 0)
+	//if file header or bit depth is wrong, then exit
+	if (checksum1 != 19778 || checksum2 != 8)
 	{
-		while (i < filesize)
-		{
-			buffer[j] = c;
-			i++;
-			if (i % width == 0)
-			{
-				lines++;
-				fseek(file_ptr, (-width*lines), SEEK_END);
-			}
-			c = fgetc(file_ptr);
-			j++;
-		}
+		printf("Fatal error: %s is not a valid 8-bit bitmap!\n", inname);
+		printf("This program will now exit.\n");
+		exit(EXIT_FAILURE);
+		// exit will terminate the program here, nothing further will happen
 	}
 	
-	else if (filetype == 1)
+	fseek(file_ptr, 18, SEEK_SET);
+	fread(&width, 2, 1, file_ptr);
+	printf("Checking file width... %upx\n", width);
+	fseek(file_ptr, 22, SEEK_SET);
+	fread(&height, 2, 1, file_ptr);
+	printf("Checking file height... %upx\n", height);
+	printf("Checking file dimensions complete!\n");
+	
+	filesize = width * height;
+	printf("Total file size: %u bytes\n", filesize);
+	printf("\n");
+	
+	buffer = malloc(filesize);
+	printf("Allocating memory...");
+	printf("\n");
+	
+	printf("Starting to read first line...\n");
+	fseek(file_ptr, -width, SEEK_END);
+	c = fgetc(file_ptr);
+	
+	while (i < filesize)
 	{
-		fseek(file_ptr, (-width*lines), SEEK_END);
-		while (i < filesize)
+		buffer[j] = c;
+		i++;
+		if (i % width == 0)
 		{
-			fscanf(file_ptr, "%c", &big_buffer[j]);
-			j++;
-			i++;
-			if (i % width == 0)
-			{
-				lines++;
-				fseek(file_ptr, (-width*lines), SEEK_END);
-			}
+			lines++;
+			fseek(file_ptr, (-width*lines), SEEK_END);
 		}
+		c = fgetc(file_ptr);
+		j++;
 	}
 		
 	printf("\nFile read successfully!\n");
@@ -81,46 +97,25 @@ void save_file(char* outname, uint8_t* source_data, uint16_t data_size)
 }
 
 void main()
-{
-	int width = 0;
-	int height = 0;
+{	
+	printf("Enter file to convert (without file extension):\n");
+	scanf("%s", inputname);
+	sprintf(inname, "%s.bmp", inputname);
 	
-	inname = malloc(13);
-	outname = malloc(13);
-	printf("Enter file to convert:\n");
-	scanf("%s", inname);
-	printf("Is the file a 0) sprite or 1) menu background?\n");
-	scanf("%d", &filetype);
+	load_file(inname);
 	
-	if (filetype == 1)
-	{
-		width = 320;
-		height = 200;
-	}
+	printf("Enter output name (without file extension)\n");
+	printf("or write 'same' to save with the BMP name:\n");
+	scanf("%s", outputname);
 	
-	else 
-	{
-		width = 8;
-		height = 8;
-	}
+	if (strcmp ("same", outputname) == 0)
+		sprintf(outname, "%s.7UP", inputname);
 	
-	filesize = width*height;
-	printf("Total file size: %u bytes", filesize);
-	printf("\n");
-	load_file(inname, width);
-	
-	printf("Enter output name:\n");
-	scanf("%s", outname);
-	printf("\n");
-	if (filetype == 1)
-	{
-		save_file(outname, big_buffer, 64000);
-		printf("BMP converted to background successfully!");
-	}
 	else
-	{
-		save_file(outname, buffer, 64);
-		printf("BMP converted to sprite successfully!");
-	}
+		sprintf(outname, "%s.7UP", outputname);
+	
+	printf("Writing file: %s\n", outname);
+	save_file(outname, buffer, filesize);
+	printf("BMP successfully converted into %s!\n", outname);
 	getchar();
 }
