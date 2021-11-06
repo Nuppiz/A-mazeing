@@ -66,8 +66,9 @@
 
 // macros
 #define TILE_AT(x, y)           g->level_data[(y) * g->level_width + (x)]
-#define ACTOR_ON_TILE(a, tile)  g->level_data[a->y * g->level_width + a->x] == tile
 #define SET_TILE(x, y, tile)    TILE_AT(x, y) = tile
+#define TILE_AT_ACTOR(a)        TILE_AT(a->x, a->y)
+#define ACTOR_ON_TILE(a, tile)  TILE_AT_ACTOR(a) == tile
 
 // globals
 uint8_t far *VGA=(uint8_t *)0xA0000000L;        /* this points to video memory. */
