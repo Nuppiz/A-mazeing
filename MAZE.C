@@ -6,21 +6,24 @@
 #define VIDEO_INT           0x10      /* the BIOS video interrupt. */
 #define WRITE_DOT           0x0C      /* BIOS func to plot a pixel. */
 #define SET_MODE            0x00      /* BIOS func to set the video mode. */
-#define EGA_16_COLOR_MODE   0xD
 #define VGA_256_COLOR_MODE  0x13      /* use to set 256-color mode. */
 #define TEXT_MODE           0x03      /* use to set 80x25 text mode. */
 
 #define SCREEN_WIDTH        320       /* width in pixels */
 #define SCREEN_HEIGHT       200       /* height in pixels */
-#define SCREEN_SIZE 		SCREEN_WIDTH*SCREEN_HEIGHT
+#define SCREEN_SIZE 		64000
 #define NUM_COLORS          16        /* number of colors in EGA */
 
 #define NUM_SCAN_QUE 		256
-#define TICKS	    		(*(volatile unsigned long far *)(0x0040006CL))
 
 #define KEY_PRESSED 		1 /* 1st bit */
 #define KEY_HIT 			2 /* 2nd bit */
 #define KEY_REL 			4 /* 3rd bit */
+#define KEY_HIT_N_REL       6 /* 2nd and 3rd bits */
+#define WAS_HIT(k) 			(kb_array[k] & KEY_HIT)
+#define WAS_REL(k) 			(kb_array[k] & KEY_REL)
+#define WAS_MOVED(k)        (kb_array[k] & KEY_HIT_N_REL)
+#define IS_PRESSED(k) 		(kb_array[k] & KEY_PRESSED)
 
 #define KEY_ESC 			1
 #define KEY_SPACE 			57
@@ -32,15 +35,9 @@
 #define KEY_CHEAT_L			38
 #define KEY_CHEAT_D			37
 
-#define IS_HIT(k) 			(kb_array[k] & KEY_HIT)
-#define IS_REL(k) 			(kb_array[k] & KEY_REL)
-#define IS_PRESSED(k) 		(kb_array[k] & KEY_PRESSED)
-
 #define TILE_WIDTH			8
 #define TILE_HEIGHT			8
 #define TILE_AREA 			TILE_WIDTH*TILE_HEIGHT
-
-#define MAX_ACTORS			10
 
 #define TILE_WALL			87
 #define TILE_FLOOR			45
@@ -50,6 +47,7 @@
 #define ITEM_KEY			42
 #define ITEM_MINE			94
 
+#define MAX_ACTORS			10
 #define ACTOR_PLAYER		0
 #define ACTOR_GUARD 		1
 #define ACTOR_GRAVE			2	
@@ -103,13 +101,9 @@ uint8_t shad_horz		[TILE_AREA];
 uint8_t shad_vert		[TILE_AREA];
 uint8_t shad_out_cor	[TILE_AREA];
 
-// structs
-union REGS regs;
-
 struct Actor
 {
-	int8_t x, y, x_vel, y_vel, type;
-	int8_t direction;
+	int8_t x, y, x_vel, y_vel, type;// coll_x, coll_y;
 };
 
 struct GameData
@@ -318,40 +312,68 @@ void player_death(struct GameData* g)
 
 void control_menu(struct GameData* g)
 {
-	if (IS_HIT(KEY_SPACE))
+	if (WAS_HIT(KEY_SPACE))
 		start_game(g);
 }
 
 void control_end(struct GameData* g)
 {
-	if (IS_HIT(KEY_SPACE))
+	if (WAS_HIT(KEY_SPACE))
 		g->game_state = GAME_MENU;
 }
 
 void control_ingame(struct GameData* g)
 {
-	// Y axis / Up / Down
-	if (IS_PRESSED(KEY_UP) && g->Actors[0].x_vel == 0)
-		g->Actors[0].y_vel = -1;
-	else if (IS_PRESSED(KEY_DOWN) && g->Actors[0].x_vel == 0)
-		g->Actors[0].y_vel = 1;
-	else
-		g->Actors[0].y_vel = 0;
-	
-	// X axis / Left / Right
-	if (IS_PRESSED(KEY_LEFT) && g->Actors[0].y_vel == 0)
-		g->Actors[0].x_vel = -1;
-	else if (IS_PRESSED(KEY_RIGHT) && g->Actors[0].y_vel == 0)
-		g->Actors[0].x_vel = 1;
-	else
-		g->Actors[0].x_vel = 0;
-	
+    #define X_AXIS 1
+    #define Y_AXIS 2
+    
+    static axis = 0;
+    struct Actor* player = g->Actors+0; // same as &g->Actors[0]
+    
+    player->x_vel = 0;
+    player->y_vel = 0;
+    
+    if (WAS_HIT(KEY_UP) || WAS_HIT(KEY_DOWN))
+    {
+        axis = Y_AXIS;
+        player->y_vel =
+        (WAS_HIT(KEY_DOWN)>>1) - (WAS_HIT(KEY_UP)>>1);
+    }
+    else if (WAS_HIT(KEY_LEFT) || WAS_HIT(KEY_RIGHT))
+    {
+        axis = X_AXIS;
+        player->x_vel =
+        (WAS_HIT(KEY_RIGHT)>>1) - (WAS_HIT(KEY_LEFT)>>1);
+    }
+    else if (axis == Y_AXIS)
+    {
+        player->y_vel =
+        IS_PRESSED(KEY_DOWN) - IS_PRESSED(KEY_UP);
+        
+        if (player->y_vel == 0)
+            player->x_vel =
+            IS_PRESSED(KEY_RIGHT) - IS_PRESSED(KEY_LEFT);
+    }
+    else if (axis == X_AXIS)
+    {
+        player->x_vel =
+        IS_PRESSED(KEY_RIGHT) - IS_PRESSED(KEY_LEFT);
+        
+        if (player->x_vel == 0)
+            player->y_vel =
+            IS_PRESSED(KEY_DOWN) - IS_PRESSED(KEY_UP);
+    }
+    
+    // clear collision flags
+    //g->Actors[0].coll_x = 0;
+    //g->Actors[0].coll_y = 0;
+
 	// Misc
-	if (IS_HIT(KEY_CHEAT_K))
+	if (WAS_HIT(KEY_CHEAT_K))
 		g->keys_acquired++;
-	if (IS_HIT(KEY_CHEAT_L))
+	if (WAS_HIT(KEY_CHEAT_L))
 		g->player_lives++;
-	if (IS_HIT(KEY_CHEAT_D))
+	if (WAS_HIT(KEY_CHEAT_D))
 		g->player_lives--;
 }
 
@@ -412,7 +434,7 @@ void process_input(struct GameData* g)
 		control_ingame(g);
 	
 	// esc always exits, wherever you are
-	if (IS_HIT(KEY_ESC))
+	if (WAS_HIT(KEY_ESC))
 		g->game_running = 0;
 	
 	clear_keys();
@@ -431,7 +453,7 @@ void move_actors(struct GameData* g)
 	while (i < g->actor_count)
 	{
 		struct Actor* p_actor = &g->Actors[i++];
-		
+        
 		// set coordinates for new square to (potentially) move into
 		// based on adding velocity to current position...
 		new_x = p_actor->x + p_actor->x_vel;
@@ -443,12 +465,23 @@ void move_actors(struct GameData* g)
 			p_actor->x = new_x;
 			p_actor->y = new_y;
 		}
-		// if colliding into a wall and is NOT player, reverse dir
+		// if colliding into a wall and is NOT player, set coll_x/y flag and reverse dir
 		else if (p_actor->type != ACTOR_PLAYER)
 		{
+            //p_actor->coll_x = p_actor->x_vel;
+            //p_actor->coll_x = p_actor->y_vel;
+            // not used for anything yet
 			p_actor->x_vel *= -1;
 			p_actor->y_vel *= -1;
 		}
+        // if colliding into a wall and is player, set coll_x/y flag
+        else
+        {
+            //p_actor->coll_x = p_actor->x_vel;
+            //p_actor->coll_x = p_actor->y_vel;
+			p_actor->x_vel = 0;
+			p_actor->y_vel = 0;
+        }
 	}
 }
 
@@ -564,6 +597,7 @@ void game_logic(struct GameData* g)
 
 void set_mode(uint8_t mode)
 {
+    union REGS regs;
 	regs.h.ah = SET_MODE;
 	regs.h.al = mode;
 	int86(VIDEO_INT, &regs, &regs);
@@ -574,11 +608,12 @@ void fill_screen(uint8_t color)
     _fmemset(VGA, color, SCREEN_SIZE);
 }
 
-void load_sprite(char* filename, uint8_t* source_data, uint16_t data_size)
+void load_sprite(char* filename, uint8_t* buffer, uint16_t data_size)
+// destination buffer was misleadingly called "source_data" before 
 {
 	FILE* file_ptr;
 	file_ptr = fopen(filename, "rb");
-	fread(source_data, 1, data_size, file_ptr);
+	fread(buffer, 1, data_size, file_ptr);
 	fclose(file_ptr);
 }
 
@@ -924,6 +959,8 @@ void level_loader(struct GameData* g)
 				);
 				
 				g->Actors[0].type = ACTOR_PLAYER;
+                //g->Actors[0].coll_x = 0;
+                //g->Actors[0].coll_y = 0;
 				g->actor_count++;
 			}
 			else if (strcmp(buffer, "guard") == 0)
@@ -938,6 +975,8 @@ void level_loader(struct GameData* g)
 					);
 						
 					g->Actors[g->actor_count].type = ACTOR_GUARD;
+                    //g->Actors[g->actor_count].coll_x = 0;
+                    //g->Actors[g->actor_count].coll_y = 0;
 					g->actor_count++;
 				}
 			}
