@@ -8,12 +8,12 @@
 
 #define SCREEN_WIDTH        320       /* width in pixels */
 #define SCREEN_HEIGHT       200       /* height in pixels */
-#define SCREEN_SIZE 		SCREEN_WIDTH*SCREEN_HEIGHT
+#define SCREEN_SIZE         SCREEN_WIDTH*SCREEN_HEIGHT
 #define NUM_COLORS          256        /* number of colors in VGA */
 
-#define TILE_WIDTH			8
-#define TILE_HEIGHT			8
-#define TILE_AREA 			TILE_WIDTH*TILE_HEIGHT
+#define TILE_WIDTH          8
+#define TILE_HEIGHT         8
+#define TILE_AREA           TILE_WIDTH*TILE_HEIGHT
 
 void set_mode();
 void fill_screen();

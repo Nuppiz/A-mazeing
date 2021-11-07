@@ -4,7 +4,7 @@
 #include "Keyb.h"
 #include "Sounds.h"
 
-#define TICKS	    		(*(volatile unsigned long far *)(0x0040006CL))
+#define TICKS               (*(volatile unsigned long far *)(0x0040006CL))
 
 // function definitions
 
@@ -16,62 +16,62 @@ void set_cursor(int x, int y)
 
 void start_game(struct GameData* g)
 {
-	fill_screen(0);
-	
-	g->game_state = GAME_INGAME;
-	g->level_num = 1;
-	g->player_lives = 3;
-	level_loader(g);
+    fill_screen(0);
+    
+    g->game_state = GAME_INGAME;
+    g->level_num = 1;
+    g->player_lives = 3;
+    level_loader(g);
 }
 
 void init_gamedata(struct GameData* g)
 {
-	/* init game data */
-	memset(g, 0, sizeof(struct GameData));
+    /* init game data */
+    memset(g, 0, sizeof(struct GameData));
 }
 
 void init(struct GameData* g)
-{		
-	/* init gfx */
-	set_mode(VGA_256_COLOR_MODE);
-	load_graphics();
+{       
+    /* init gfx */
+    set_mode(VGA_256_COLOR_MODE);
+    load_graphics();
 
-	/* init gamedata */
-	init_gamedata(g);
-	g->level_num = 1;
-	g->game_running = 1;
-	g->game_state = GAME_MENU;
-	
-	/* init keyboard */
-	init_keyboard();
+    /* init gamedata */
+    init_gamedata(g);
+    g->level_num = 1;
+    g->game_running = 1;
+    g->game_state = GAME_MENU;
+    
+    /* init keyboard */
+    init_keyboard();
 }
 
 void quit()
 {
-	deinit_keyboard();
-	set_mode(TEXT_MODE);
+    deinit_keyboard();
+    set_mode(TEXT_MODE);
 }
 
 int main()
 {
-	/* local variables all inside GameData struct called g */
-	struct GameData g;
-	
-	/* initialize everything */
-	init(&g);
+    /* local variables all inside GameData struct called g */
+    struct GameData g;
+    
+    /* initialize everything */
+    init(&g);
 
-	/* run game, get keyboard state first */
-	while (g.game_running == 1)
-	{
-		process_input(&g);
-		game_logic(&g);
-		render(&g);
-		//play_audio(&g);
-		delay(100);
-	}
-	
-	/* quit */
-	quit();
-	
-	return 0;
+    /* run game, get keyboard state first */
+    while (g.game_running == 1)
+    {
+        process_input(&g);
+        game_logic(&g);
+        render(&g);
+        //play_audio(&g);
+        delay(100);
+    }
+    
+    /* quit */
+    quit();
+    
+    return 0;
 }

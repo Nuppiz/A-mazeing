@@ -66,8 +66,8 @@ void sound_gameover()
         outportb(0x42, counter >> 8); // MSB
         delay(2); // wait for a bit
     }
-	// down...
-	for (i = 500; i >= 200; i--)
+    // down...
+    for (i = 500; i >= 200; i--)
     {
         counter = (PIT_FREQ / i); // calculate frequency
         outportb(0x42, counter & 0xff); // LSB
