@@ -28,6 +28,8 @@
 #define ITEM_KEY            42
 #define ITEM_MINE           94
 
+#define TICKS               (*(volatile unsigned long far *)(0x0040006CL))
+
 //macros
 #define TILE_AT(x, y)           g->level_data[(y) * g->level_width + (x)]
 #define SET_TILE(x, y, tile)    TILE_AT(x, y) = tile

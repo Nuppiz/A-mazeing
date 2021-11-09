@@ -30,6 +30,7 @@ uint8_t shad_vert       [TILE_AREA];
 uint8_t shad_out_cor    [TILE_AREA];
 uint8_t shad_mine       [TILE_AREA];
 uint8_t shad_key        [TILE_AREA];
+uint8_t alphabet        [2728];
 
 void set_mode(uint8_t mode)
 {
@@ -72,6 +73,7 @@ void load_graphics()
     load_sprite("GFX/SHAD_OC.7UP", shad_out_cor, 64);
     load_sprite("GFX/SHAD_M.7UP", shad_mine, 64);
     load_sprite("GFX/SHAD_K.7UP", shad_key, 64);
+    load_sprite("GFX/FONT.7UP", alphabet, 2728);
 }
 
 void draw_sprite(int x, int y, uint8_t* sprite)
@@ -169,6 +171,59 @@ void draw_shadow(struct GameData* g, int x, int y)
     
     else if (TILE_AT(x-1, y-1) == TILE_WALL)
         draw_sprite_tr(pixel_x, pixel_y, shad_out_cor);
+}
+
+void draw_text(int x, int y, int i)
+{
+    uint8_t index_x = 0;
+    uint8_t index_y = 0;
+    i = i * CHARACTER_SIZE;
+
+    for (index_y=0;index_y<TILE_HEIGHT;index_y++)
+    {
+        for (index_x=0;index_x<TILE_WIDTH;index_x++)
+        {
+            if (alphabet[i] != 13)
+            {
+                VGA[y*SCREEN_WIDTH+x]=alphabet[i];
+                i++;
+                x++;
+            }
+            else
+            {
+                i++;
+                x++;
+            }
+        }
+        index_x = 0;
+        x = x - TILE_WIDTH;
+        y++;
+    }
+    index_y = 0;
+    i= 0;
+}
+
+void render_text(int x, int y, char* string)
+{
+    int i = 0;
+    int symbol_index;
+    char c;
+    
+    while (string[i] != 0)
+    {
+        c = string[i];
+        if (c >= 'A' && c <= 'Z')
+            symbol_index = (c - 'A' + FONT_LETTER_OFFSET);
+        else if (c >= '0' && c <= '9')
+            symbol_index = (c - '0' + FONT_NUMBER_OFFSET);
+        else if (c == ':')
+            symbol_index = 36;
+        else if (c == ' ')
+            symbol_index = 37;
+        draw_text(x, y, symbol_index);
+        x = x + 10;
+        i++;
+    }
 }
 
 void render_maze(struct GameData* g)
@@ -302,8 +357,12 @@ void render_end()
 }
 
 void render(struct GameData* g)
-{
+{    
     int level_oversized = 0; //will come back to this later
+    
+    char lvl[12] = "";
+    char keys[12] = "";
+    char lives[12] = "";
     
     // in case playing, just died, or exited
     // draw play field and objects
@@ -329,21 +388,20 @@ void render(struct GameData* g)
 
         render_maze(g);
         render_actors(g);
-        /*
-        set_cursor(1,0);
-        printf("LEVEL: %d", g->level_num);
-        set_cursor(16, 0);
-        printf("KEYS: %d", g->keys_acquired);
+        
+        sprintf(lvl, "LEVEL: %d", g->level_num);
+        sprintf(keys, "KEYS: %d", g->keys_acquired);
+        sprintf(lives, "LIVES: %d", g->player_lives);
+        
+        render_text(1, 1, lvl);
+        render_text(120, 1, keys);
         if (g->player_lives > -1)
-        {
-            set_cursor(30, 0);
-            printf("LIVES: %d", g->player_lives);
-        }
+            render_text(230, 1, lives);
         else
-        {
-            set_cursor(30, 0);
-            printf("LIVES: 0");
-        }*/
+            render_text(230, 1, "LIVES: 0");
+        
+        //render_text(0, 5, "ABCDEFGHIJKLMNOPQRS");
+        //render_text(0, 15, "TUVWXYZ0123456789 :");
 
         render_offset_x = 0;
         render_offset_y = 0;

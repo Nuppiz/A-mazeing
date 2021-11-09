@@ -90,6 +90,7 @@ void player_death(struct GameData* g)
     p->type = ACTOR_PLAYER;
     fill_screen(0);
     level_loader(g);
+    render(g);
 }
 
 void move_actors(struct GameData* g)
@@ -130,6 +131,7 @@ void player_hit_detect(struct GameData* g)
     {
         p->type = ACTOR_EXPLO;
         g->player_lives--;
+        fill_screen(0); // replace later with just blanking the stat
         
         if (g->player_lives < 0)
             g->game_state = GAME_OVER;
@@ -142,6 +144,7 @@ void player_hit_detect(struct GameData* g)
         g->keys_acquired++;
         SET_TILE(p->x, p->y, TILE_FLOOR);
         sound_key();
+        fill_screen(0); // replace later with just blanking the stat
     }
     // try to open door
     else if (ACTOR_ON_TILE(p, TILE_DOOR_C))
@@ -157,11 +160,13 @@ void player_hit_detect(struct GameData* g)
         {
             SET_TILE(p->x, p->y, TILE_DOOR_O);
             g->keys_acquired--;
+            fill_screen(0); // replace later with just blanking the stat
         }
     }
     // exit and win the level
     else if (ACTOR_ON_TILE(p, TILE_EXIT))
         g->game_state = GAME_WIN;
+        fill_screen(0); // replace later with just blanking the stat
 
     // see if we hit a guard
     while (i < g->actor_count)
@@ -173,8 +178,9 @@ void player_hit_detect(struct GameData* g)
             p->type = ACTOR_GRAVE;
             enemy->type = ACTOR_GRAVE;
             g->player_lives--;
+            fill_screen(0); // replace later with just blanking the stat
             
-            if (g->player_lives < 1)
+            if (g->player_lives < 0)
                 g->game_state = GAME_OVER;
             else
             {

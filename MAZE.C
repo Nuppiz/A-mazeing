@@ -4,7 +4,9 @@
 #include "Keyb.h"
 #include "Sounds.h"
 
-#define TICKS               (*(volatile unsigned long far *)(0x0040006CL))
+extern char* lvl;
+extern char* keys;
+extern char* lives;
 
 // function definitions
 
