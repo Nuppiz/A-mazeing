@@ -30,7 +30,7 @@ uint8_t shad_vert       [TILE_AREA];
 uint8_t shad_out_cor    [TILE_AREA];
 uint8_t shad_mine       [TILE_AREA];
 uint8_t shad_key        [TILE_AREA];
-uint8_t alphabet        [2728];
+uint8_t alphabet        [4240];
 
 void set_mode(uint8_t mode)
 {
@@ -73,7 +73,7 @@ void load_graphics()
     load_sprite("GFX/SHAD_OC.7UP", shad_out_cor, 64);
     load_sprite("GFX/SHAD_M.7UP", shad_mine, 64);
     load_sprite("GFX/SHAD_K.7UP", shad_key, 64);
-    load_sprite("GFX/FONT.7UP", alphabet, 2728);
+    load_sprite("GFX/FONT.7UP", alphabet, 4240);
 }
 
 void draw_sprite(int x, int y, uint8_t* sprite)
@@ -153,6 +153,27 @@ void draw_big(int x, int y, int w, int h, uint8_t* sprite)
     index_y = 0;
 }
 
+void draw_rectangle(int x, int y, int w, int h, uint8_t color)
+{
+    int index_x = 0;
+    int index_y = 0;
+    int i = 0;
+
+    for (index_y=0; index_y<h;index_y++)
+    {
+        for (index_x=0; index_x<w;index_x++)
+        {
+            VGA[y*SCREEN_WIDTH+x]=color;
+            i++;
+            x++;
+        }
+        index_x = 0;
+        x -= w;
+        y++;
+    }
+    index_y = 0;
+}
+
 void draw_shadow(struct GameData* g, int x, int y)
 {    
     int pixel_x = x*TILE_WIDTH;
@@ -173,7 +194,7 @@ void draw_shadow(struct GameData* g, int x, int y)
         draw_sprite_tr(pixel_x, pixel_y, shad_out_cor);
 }
 
-void draw_text(int x, int y, int i)
+void draw_text(int x, int y, int i, uint8_t color)
 {
     uint8_t index_x = 0;
     uint8_t index_y = 0;
@@ -185,7 +206,7 @@ void draw_text(int x, int y, int i)
         {
             if (alphabet[i] != 13)
             {
-                VGA[y*SCREEN_WIDTH+x]=alphabet[i];
+                VGA[y*SCREEN_WIDTH+x]=alphabet[i] + color;
                 i++;
                 x++;
             }
@@ -203,26 +224,33 @@ void draw_text(int x, int y, int i)
     i= 0;
 }
 
-void render_text(int x, int y, char* string)
+void render_text(int x, int y, char* string, uint8_t color)
 {
     int i = 0;
-    int symbol_index;
     char c;
     
     while (string[i] != 0)
     {
         c = string[i];
-        if (c >= 'A' && c <= 'Z')
-            symbol_index = (c - 'A' + FONT_LETTER_OFFSET);
-        else if (c >= '0' && c <= '9')
-            symbol_index = (c - '0' + FONT_NUMBER_OFFSET);
-        else if (c == ':')
-            symbol_index = 36;
-        else if (c == ' ')
-            symbol_index = 37;
-        draw_text(x, y, symbol_index);
+        draw_text(x, y, c - 32, color);
         x = x + 10;
         i++;
+    }
+}
+
+void typewriter(int x, int y, char* string, uint8_t color)
+{
+    int i = 0;
+    char c;
+    
+    while (string[i] != 0)
+    {
+        c = string[i];
+        draw_text(x, y, c - 32, color);
+        x = x + 10;
+        i++;
+        sound_typing();
+        delay(100);
     }
 }
 
@@ -352,8 +380,7 @@ void render_menu()
 void render_end()
 {
     fill_screen(0);
-    set_cursor(12, 11);
-    printf("A WINNER IS YOU");
+    render_text(122, 96, "YOU WIN!", 14);
 }
 
 void render(struct GameData* g)
@@ -393,15 +420,12 @@ void render(struct GameData* g)
         sprintf(keys, "KEYS: %d", g->keys_acquired);
         sprintf(lives, "LIVES: %d", g->player_lives);
         
-        render_text(1, 1, lvl);
-        render_text(120, 1, keys);
+        render_text(1, 1, lvl, 15);
+        render_text(120, 1, keys, 15);
         if (g->player_lives > -1)
-            render_text(230, 1, lives);
+            render_text(230, 1, lives, 15);
         else
-            render_text(230, 1, "LIVES: 0");
-        
-        //render_text(0, 5, "ABCDEFGHIJKLMNOPQRS");
-        //render_text(0, 15, "TUVWXYZ0123456789 :");
+            render_text(230, 1, "LIVES: 0", 15);
 
         render_offset_x = 0;
         render_offset_y = 0;
@@ -410,6 +434,7 @@ void render(struct GameData* g)
     else if (g->game_state == GAME_MENU)
     {
         render_menu();
+        render_text(200, 1, "VER. 0.0003A", 0);
     }
     // if end ...
     else if (g->game_state == GAME_END)

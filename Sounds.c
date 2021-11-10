@@ -118,3 +118,21 @@ void sound_key()
     outportb(0x61, inportb(0x61) & (~3));
     outportb(0x43, 0x00);
 }
+
+void sound_typing()
+{
+    int counter;
+    
+    // init speaker
+    outportb(0x61, inportb(0x61) | 3);
+    outportb(0x43, 0xB6);
+
+    counter = (PIT_FREQ / 250); // calculate frequency
+    outportb(0x42, counter & 0xff); // LSB
+    outportb(0x42, counter >> 8); // MSB
+    delay(10); // wait for a bit
+        
+    // turn off the speaker
+    outportb(0x61, inportb(0x61) & (~3));
+    outportb(0x43, 0x00);
+}

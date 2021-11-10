@@ -17,8 +17,10 @@ void level_loader(struct GameData* g)
     
     if (level_file == NULL)
     {
+        set_mode(TEXT_MODE);
         printf("Unable to open file: %s\n", filename);
-        printf("Please check the file actually exists\n");
+        printf("Please check the file actually exists!\n");
+        deinit_keyboard();
         exit(EXIT_FAILURE);
     }
     
@@ -131,7 +133,7 @@ void player_hit_detect(struct GameData* g)
     {
         p->type = ACTOR_EXPLO;
         g->player_lives--;
-        fill_screen(0); // replace later with just blanking the stat
+        draw_rectangle(300, 1, 18, 8, 0);
         
         if (g->player_lives < 0)
             g->game_state = GAME_OVER;
@@ -144,7 +146,7 @@ void player_hit_detect(struct GameData* g)
         g->keys_acquired++;
         SET_TILE(p->x, p->y, TILE_FLOOR);
         sound_key();
-        fill_screen(0); // replace later with just blanking the stat
+        draw_rectangle(180, 1, 18, 8, 0);
     }
     // try to open door
     else if (ACTOR_ON_TILE(p, TILE_DOOR_C))
@@ -160,13 +162,13 @@ void player_hit_detect(struct GameData* g)
         {
             SET_TILE(p->x, p->y, TILE_DOOR_O);
             g->keys_acquired--;
-            fill_screen(0); // replace later with just blanking the stat
+            draw_rectangle(180, 1, 18, 8, 0);
         }
     }
     // exit and win the level
     else if (ACTOR_ON_TILE(p, TILE_EXIT))
         g->game_state = GAME_WIN;
-        fill_screen(0); // replace later with just blanking the stat
+        draw_rectangle(71, 1, 18, 8, 0);
 
     // see if we hit a guard
     while (i < g->actor_count)
@@ -178,7 +180,7 @@ void player_hit_detect(struct GameData* g)
             p->type = ACTOR_GRAVE;
             enemy->type = ACTOR_GRAVE;
             g->player_lives--;
-            fill_screen(0); // replace later with just blanking the stat
+            draw_rectangle(300, 1, 18, 8, 0);
             
             if (g->player_lives < 0)
                 g->game_state = GAME_OVER;
@@ -202,8 +204,8 @@ void check_state(struct GameData* g)
 {
     if (g->game_state == GAME_OVER)
     {
-        set_cursor(15, 11);
-        printf("GAME OVER!");
+        draw_rectangle(111, 95, 98, 10, 0);
+        render_text(112, 96, "GAME OVER!", 4);
         sound_gameover();
         delay(1000);
         g->game_state = GAME_MENU;

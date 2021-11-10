@@ -20,6 +20,10 @@ void start_game(struct GameData* g)
 {
     fill_screen(0);
     
+    typewriter(102, 96, "GET PSYCHED!", 1);
+    delay(2000);
+    
+    fill_screen(0);
     g->game_state = GAME_INGAME;
     g->level_num = 1;
     g->player_lives = 3;

@@ -16,9 +16,6 @@
 #define TILE_AREA           TILE_WIDTH*TILE_HEIGHT
 #define CHARACTER_SIZE      72
 
-#define FONT_LETTER_OFFSET 0
-#define FONT_NUMBER_OFFSET 26
-
 void set_mode();
 void fill_screen();
 void load_sprite();
