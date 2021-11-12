@@ -3,6 +3,7 @@
 
 // globals
 uint8_t far *VGA=(uint8_t *)0xA0000000L;        /* this points to video memory. */
+uint8_t far screen_buf [64000]; // double buffer
 int render_offset_x = 0;
 int render_offset_y = 0;
 
@@ -41,7 +42,7 @@ void set_mode(uint8_t mode)
 
 void fill_screen(uint8_t color)
 {
-    _fmemset(VGA, color, SCREEN_SIZE);
+    _fmemset(screen_buf, color, SCREEN_SIZE);
 }
 
 void load_sprite(char* filename, uint8_t* source_data, uint16_t data_size)
@@ -89,7 +90,7 @@ void draw_sprite(int x, int y, uint8_t* sprite)
     {
         for (index_x=0;index_x<TILE_WIDTH;index_x++)
         {
-            VGA[y*SCREEN_WIDTH+x]=sprite[i];
+            screen_buf[y*SCREEN_WIDTH+x]=sprite[i];
             i++;
             x++;
         }
@@ -115,7 +116,7 @@ void draw_sprite_tr(int x, int y, uint8_t* sprite)
         {
             if (sprite[i] != 13)
             {
-                VGA[y*SCREEN_WIDTH+x]=sprite[i];
+                screen_buf[y*SCREEN_WIDTH+x]=sprite[i];
                 i++;
                 x++;
             }
@@ -142,7 +143,7 @@ void draw_big(int x, int y, int w, int h, uint8_t* sprite)
     {
         for (index_x=0; index_x<w;index_x++)
         {
-            VGA[y*SCREEN_WIDTH+x]=sprite[i];
+            screen_buf[y*SCREEN_WIDTH+x]=sprite[i];
             i++;
             x++;
         }
@@ -163,7 +164,7 @@ void draw_rectangle(int x, int y, int w, int h, uint8_t color)
     {
         for (index_x=0; index_x<w;index_x++)
         {
-            VGA[y*SCREEN_WIDTH+x]=color;
+            screen_buf[y*SCREEN_WIDTH+x]=color;
             i++;
             x++;
         }
@@ -206,7 +207,7 @@ void draw_text(int x, int y, int i, uint8_t color)
         {
             if (alphabet[i] != 13)
             {
-                VGA[y*SCREEN_WIDTH+x]=alphabet[i] + color;
+                screen_buf[y*SCREEN_WIDTH+x]=alphabet[i] + color;
                 i++;
                 x++;
             }
@@ -250,6 +251,7 @@ void typewriter(int x, int y, char* string, uint8_t color)
         x = x + 10;
         i++;
         sound_typing();
+        memcpy(VGA,screen_buf,320*200);
         delay(100);
     }
 }
@@ -383,6 +385,13 @@ void render_end()
     render_text(122, 96, "YOU WIN!", 14);
 }
 
+void start_screen()
+{
+    fill_screen(0);
+    
+    typewriter(102, 96, "GET PSYCHED!", 1);
+}
+
 void render(struct GameData* g)
 {    
     int level_oversized = 0; //will come back to this later
@@ -441,4 +450,5 @@ void render(struct GameData* g)
     {
         render_end();
     }
+    memcpy(VGA,screen_buf,320*200);
 }

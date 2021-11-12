@@ -18,9 +18,7 @@ void set_cursor(int x, int y)
 
 void start_game(struct GameData* g)
 {
-    fill_screen(0);
-    
-    typewriter(102, 96, "GET PSYCHED!", 1);
+    start_screen();
     delay(2000);
     
     fill_screen(0);
