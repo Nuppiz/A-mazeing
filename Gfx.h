@@ -8,7 +8,7 @@
 
 #define SCREEN_WIDTH        320       /* width in pixels */
 #define SCREEN_HEIGHT       200       /* height in pixels */
-#define SCREEN_SIZE         SCREEN_WIDTH*SCREEN_HEIGHT
+#define SCREEN_SIZE         64000
 #define NUM_COLORS          256        /* number of colors in VGA */
 
 #define TILE_WIDTH          8

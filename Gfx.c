@@ -251,7 +251,7 @@ void typewriter(int x, int y, char* string, uint8_t color)
         x = x + 10;
         i++;
         sound_typing();
-        memcpy(VGA,screen_buf,320*200);
+        memcpy(VGA,screen_buf,SCREEN_SIZE);
         delay(100);
     }
 }
@@ -450,5 +450,5 @@ void render(struct GameData* g)
     {
         render_end();
     }
-    memcpy(VGA,screen_buf,320*200);
+    memcpy(VGA,screen_buf,SCREEN_SIZE);
 }
