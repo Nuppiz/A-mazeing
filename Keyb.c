@@ -108,12 +108,29 @@ void control_ingame(struct GameData* g)
     //g->Actors[0].coll_y = 0;
 
     // Misc
-    if (WAS_HIT(KEY_CHEAT_K))
-        add_key(g);
-    if (WAS_HIT(KEY_CHEAT_L))
-        add_life(g);
-    if (WAS_HIT(KEY_CHEAT_D))
-        remove_life(g);
+    if (WAS_HIT(KEY_Q) && WAS_HIT(KEY_BKSPC) && g->debugmode == 0)
+    {
+        g->debugmode = 1;
+        debug_screen_e();
+    }
+    
+    else if (WAS_HIT(KEY_Q) && WAS_HIT(KEY_BKSPC) && g->debugmode == 1)
+    {
+        g->debugmode = 0;
+        debug_screen_d();
+    }
+    
+    if (g->debugmode == 1)
+    {
+        if (WAS_HIT(KEY_CHEAT_K))
+            add_key(g);
+        else if (WAS_HIT(KEY_CHEAT_L))
+            add_life(g);
+        else if (WAS_HIT(KEY_CHEAT_D))
+            remove_life(g);
+        else if (WAS_HIT(KEY_CHEAT_S))
+            level_skip(g);
+    }
 }
 
 void get_keyboard()

@@ -399,6 +399,24 @@ void gameover_screen()
     memcpy(VGA,screen_buf,SCREEN_SIZE);
 }
 
+void debug_screen_e()
+{
+    draw_rectangle(66, 19, 188, 10, 1);
+    render_text(67, 20, "DEBUG MODE ENABLED!", 15);
+    memcpy(VGA,screen_buf,SCREEN_SIZE);
+    delay(1000);
+    draw_rectangle(56, 19, 208, 10, 0);
+}
+
+void debug_screen_d()
+{
+    draw_rectangle(61, 19, 198, 10, 1);
+    render_text(62, 20, "DEBUG MODE DISABLED!", 15);
+    memcpy(VGA,screen_buf,SCREEN_SIZE);
+    delay(1000);
+    draw_rectangle(56, 19, 208, 10, 0);
+}
+
 void render(struct GameData* g)
 {    
     int level_oversized = 0; //will come back to this later
@@ -437,7 +455,6 @@ void render(struct GameData* g)
         sprintf(lives, "LIVES: %d", g->player_lives);
         
         render_text(1, 1, lvl, 15);
-        //render_text(120, 1, keys, 15);
         if (g->keys_acquired < 100)
             render_text(120, 1, keys, 15);
         else

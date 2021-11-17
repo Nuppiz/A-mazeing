@@ -33,6 +33,8 @@ void render_menu();
 void render_end();
 void start_screen();
 void gameover_screen();
+void debug_screen_e();
+void debug_screen_d();
 void render();
 
 #endif

@@ -44,6 +44,7 @@ struct GameData
 {   
     int game_running;
     int game_state;
+    uint8_t debugmode;
     /*int new_game;*/
 
     uint8_t level_data[1000];   

@@ -16,6 +16,9 @@
 #define KEY_CHEAT_K         46
 #define KEY_CHEAT_L         38
 #define KEY_CHEAT_D         37
+#define KEY_CHEAT_S         31
+#define KEY_Q               16
+#define KEY_BKSPC           14
 
 #define KEY_PRESSED         1 /* 1st bit */
 #define KEY_HIT             2 /* 2nd bit */

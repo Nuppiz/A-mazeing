@@ -23,6 +23,7 @@ void start_game(struct GameData* g)
     
     fill_screen(0);
     g->game_state = GAME_INGAME;
+    g->debugmode = 0;
     g->level_num = 1;
     g->player_lives = 3;
     level_loader(g);
