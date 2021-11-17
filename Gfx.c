@@ -392,6 +392,13 @@ void start_screen()
     typewriter(102, 96, "GET PSYCHED!", 1);
 }
 
+void gameover_screen()
+{
+    draw_rectangle(111, 95, 98, 10, 0);
+    render_text(112, 96, "GAME OVER!", 4);
+    memcpy(VGA,screen_buf,SCREEN_SIZE);
+}
+
 void render(struct GameData* g)
 {    
     int level_oversized = 0; //will come back to this later
@@ -430,10 +437,17 @@ void render(struct GameData* g)
         sprintf(lives, "LIVES: %d", g->player_lives);
         
         render_text(1, 1, lvl, 15);
-        render_text(120, 1, keys, 15);
-        if (g->player_lives > -1)
-            render_text(230, 1, lives, 15);
+        //render_text(120, 1, keys, 15);
+        if (g->keys_acquired < 100)
+            render_text(120, 1, keys, 15);
         else
+            render_text(120, 1, "KEYS: 99", 15);
+        
+        if (g->player_lives > -1 && g->player_lives < 100)
+            render_text(230, 1, lives, 15);
+        else if (g->player_lives > 99)
+            render_text(230, 1, "LIVES: 99", 15);
+        else if (g->player_lives >= -1)
             render_text(230, 1, "LIVES: 0", 15);
 
         render_offset_x = 0;

@@ -95,6 +95,31 @@ void player_death(struct GameData* g)
     render(g);
 }
 
+void add_key(struct GameData* g)
+{
+    g->keys_acquired++;
+    sound_key();
+    draw_rectangle(180, 1, 18, 8, 0);
+}
+
+void remove_key(struct GameData* g)
+{
+    g->keys_acquired--;
+    draw_rectangle(180, 1, 18, 8, 0);
+}
+
+void add_life(struct GameData* g)
+{
+    g->player_lives++;
+    draw_rectangle(300, 1, 18, 8, 0);
+}
+
+void remove_life(struct GameData* g)
+{
+    g->player_lives--;
+    draw_rectangle(300, 1, 18, 8, 0);
+}
+
 void move_actors(struct GameData* g)
 {
     int new_x, new_y;
@@ -132,8 +157,7 @@ void player_hit_detect(struct GameData* g)
     if (ACTOR_ON_TILE(p, ITEM_MINE))
     {
         p->type = ACTOR_EXPLO;
-        g->player_lives--;
-        draw_rectangle(300, 1, 18, 8, 0);
+        remove_life(g);
         
         if (g->player_lives < 0)
             g->game_state = GAME_OVER;
@@ -143,10 +167,8 @@ void player_hit_detect(struct GameData* g)
     // collect key
     else if (ACTOR_ON_TILE(p, ITEM_KEY))
     {
-        g->keys_acquired++;
+        add_key(g);
         SET_TILE(p->x, p->y, TILE_FLOOR);
-        sound_key();
-        draw_rectangle(180, 1, 18, 8, 0);
     }
     // try to open door
     else if (ACTOR_ON_TILE(p, TILE_DOOR_C))
@@ -160,9 +182,8 @@ void player_hit_detect(struct GameData* g)
         // otherwise, we remain in the door tile and change tile to DOOR_O
         else
         {
+            remove_key(g);
             SET_TILE(p->x, p->y, TILE_DOOR_O);
-            g->keys_acquired--;
-            draw_rectangle(180, 1, 18, 8, 0);
         }
     }
     // exit and win the level
@@ -179,8 +200,7 @@ void player_hit_detect(struct GameData* g)
         {
             p->type = ACTOR_GRAVE;
             enemy->type = ACTOR_GRAVE;
-            g->player_lives--;
-            draw_rectangle(300, 1, 18, 8, 0);
+            remove_life(g);
             
             if (g->player_lives < 0)
                 g->game_state = GAME_OVER;
@@ -204,8 +224,7 @@ void check_state(struct GameData* g)
 {
     if (g->game_state == GAME_OVER)
     {
-        draw_rectangle(111, 95, 98, 10, 0);
-        render_text(112, 96, "GAME OVER!", 4);
+        gameover_screen();
         sound_gameover();
         delay(1000);
         g->game_state = GAME_MENU;

@@ -109,11 +109,11 @@ void control_ingame(struct GameData* g)
 
     // Misc
     if (WAS_HIT(KEY_CHEAT_K))
-        g->keys_acquired++;
+        add_key(g);
     if (WAS_HIT(KEY_CHEAT_L))
-        g->player_lives++;
+        add_life(g);
     if (WAS_HIT(KEY_CHEAT_D))
-        g->player_lives--;
+        remove_life(g);
 }
 
 void get_keyboard()

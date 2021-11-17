@@ -11,9 +11,9 @@
 #define GAME_OVER           2
 #define GAME_WIN            3
 #define GAME_END            4
-#define GAME_DEATH          5
 
 #define MAX_ACTORS          10
+#define LEVEL_SIZE          level_width*level_height
 
 #define ACTOR_PLAYER        0
 #define ACTOR_GUARD         1

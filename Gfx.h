@@ -25,10 +25,14 @@ void draw_sprite_tr();
 void draw_big();
 void draw_shadow();
 void draw_text();
+void render_text();
+void typewriter();
 void render_maze();
 void render_actors();
 void render_menu();
 void render_end();
+void start_screen();
+void gameover_screen();
 void render();
 
 #endif
