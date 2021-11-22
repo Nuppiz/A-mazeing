@@ -405,7 +405,7 @@ void debug_screen_e()
     render_text(67, 20, "DEBUG MODE ENABLED!", 15);
     memcpy(VGA,screen_buf,SCREEN_SIZE);
     delay(1000);
-    draw_rectangle(56, 19, 208, 10, 0);
+    draw_rectangle(66, 19, 188, 10, 0);
 }
 
 void debug_screen_d()
@@ -414,7 +414,7 @@ void debug_screen_d()
     render_text(62, 20, "DEBUG MODE DISABLED!", 15);
     memcpy(VGA,screen_buf,SCREEN_SIZE);
     delay(1000);
-    draw_rectangle(56, 19, 208, 10, 0);
+    draw_rectangle(66, 19, 188, 10, 0);
 }
 
 void render(struct GameData* g)
