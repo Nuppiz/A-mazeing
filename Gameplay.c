@@ -69,7 +69,7 @@ void level_loader(struct GameData* g)
                 {
                     if (c != '\n')
                     {
-                        g->level_data[i] = c;
+                        g->tile_data[i] = c;
                         i++;
                     }
                     else
@@ -118,6 +118,12 @@ void remove_life(struct GameData* g)
 {
     g->player_lives--;
     draw_rectangle(300, 1, 18, 8, 0);
+}
+
+void level_skip(struct GameData* g)
+{
+    g->game_state = GAME_WIN;
+    draw_rectangle(71, 1, 18, 8, 0);
 }
 
 void move_actors(struct GameData* g)

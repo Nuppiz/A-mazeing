@@ -266,50 +266,50 @@ void render_maze(struct GameData* g)
     {
         while (x < g->level_width)
         {
-            if (g->level_data[counter] == TILE_WALL)
+            if (g->tile_data[counter] == TILE_WALL)
                 draw_sprite     (x * TILE_WIDTH,y * TILE_HEIGHT,brick_wall);
-            else if (g->level_data[counter] == TILE_FLOOR)
+            else if (g->tile_data[counter] == TILE_FLOOR)
             {
                 draw_sprite     (x * TILE_WIDTH,y * TILE_HEIGHT,floor_sprite);
                 draw_shadow(g, x, y);
             }
-            else if (g->level_data[counter] == ITEM_MINE && TILE_AT(x-1, y) != TILE_WALL)
+            else if (g->tile_data[counter] == ITEM_MINE && TILE_AT(x-1, y) != TILE_WALL)
             {
                 draw_sprite     (x * TILE_WIDTH,y * TILE_HEIGHT,floor_sprite);
                 draw_shadow(g, x, y);
                 draw_sprite_tr  (x * TILE_WIDTH,y * TILE_HEIGHT,mine_sprite);
             }
-            else if (g->level_data[counter] == ITEM_MINE && TILE_AT(x-1, y) == TILE_WALL)
+            else if (g->tile_data[counter] == ITEM_MINE && TILE_AT(x-1, y) == TILE_WALL)
             {
                 draw_sprite     (x * TILE_WIDTH,y * TILE_HEIGHT,floor_sprite);
                 draw_shadow(g, x, y);
                 draw_sprite_tr(x * TILE_WIDTH,y * TILE_HEIGHT, shad_mine);
             }
-            else if (g->level_data[counter] == ITEM_KEY && TILE_AT(x-1, y) != TILE_WALL)
+            else if (g->tile_data[counter] == ITEM_KEY && TILE_AT(x-1, y) != TILE_WALL)
             {
                 draw_sprite     (x * TILE_WIDTH,y * TILE_HEIGHT,floor_sprite);
                 draw_shadow(g, x, y);
                 draw_sprite_tr  (x * TILE_WIDTH,y * TILE_HEIGHT,key_sprite);
             }
-            else if (g->level_data[counter] == ITEM_KEY && TILE_AT(x-1, y) == TILE_WALL)
+            else if (g->tile_data[counter] == ITEM_KEY && TILE_AT(x-1, y) == TILE_WALL)
             {
                 draw_sprite     (x * TILE_WIDTH,y * TILE_HEIGHT,floor_sprite);
                 draw_shadow(g, x, y);
                 draw_sprite_tr(x * TILE_WIDTH,y * TILE_HEIGHT, shad_key);
             }
-            else if (g->level_data[counter] == TILE_DOOR_C)
+            else if (g->tile_data[counter] == TILE_DOOR_C)
             {
                 draw_sprite     (x * TILE_WIDTH,y * TILE_HEIGHT,floor_sprite);
                 draw_shadow(g, x, y);
                 draw_sprite_tr  (x * TILE_WIDTH,y * TILE_HEIGHT,door_c_sprite);
             }
-            else if (g->level_data[counter] == TILE_DOOR_O)
+            else if (g->tile_data[counter] == TILE_DOOR_O)
             {
                 draw_sprite     (x * TILE_WIDTH,y * TILE_HEIGHT,floor_sprite);
                 draw_shadow(g, x, y);
                 draw_sprite_tr  (x * TILE_WIDTH,y * TILE_HEIGHT,door_o_sprite);
             }
-            else if (g->level_data[counter] == TILE_EXIT)
+            else if (g->tile_data[counter] == TILE_EXIT)
                 draw_sprite     (x * TILE_WIDTH,y * TILE_HEIGHT,exit_sprite);
                 
             counter = counter++;
@@ -405,7 +405,7 @@ void debug_screen_e()
     render_text(67, 20, "DEBUG MODE ENABLED!", 15);
     memcpy(VGA,screen_buf,SCREEN_SIZE);
     delay(1000);
-    draw_rectangle(66, 19, 188, 10, 0);
+    draw_rectangle(61, 19, 198, 10, 0);
 }
 
 void debug_screen_d()
@@ -414,7 +414,7 @@ void debug_screen_d()
     render_text(62, 20, "DEBUG MODE DISABLED!", 15);
     memcpy(VGA,screen_buf,SCREEN_SIZE);
     delay(1000);
-    draw_rectangle(66, 19, 188, 10, 0);
+    draw_rectangle(61, 19, 198, 10, 0);
 }
 
 void render(struct GameData* g)
