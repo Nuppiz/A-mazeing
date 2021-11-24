@@ -48,7 +48,7 @@ void init(struct GameData* g)
     g->game_state = GAME_MENU;
     
     /* init keyboard */
-    init_keyboard();
+    initInput();
 }
 
 void quit()

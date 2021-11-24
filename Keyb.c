@@ -1,106 +1,138 @@
-#include "Keyb.h"
 #include "Shared.h"
-
-uint8_t kb_array[128];
-uint8_t kb_queue[NUM_SCAN_QUE];
-uint8_t kb_queue_head;
-uint8_t kb_queue_tail;
-unsigned char readch, oldreadch, extended; // needed for keyboard interrupt,
-// don't know what for lmao
+#include "Keyb.h"
+#include "Keys.h"
 
 extern struct GameData g;
 
+Input_t Input = {0};
+Input_t* g_Input = &Input;
+uint8_t* g_Keyboard = Input.kb_array;
+
+static void interrupt (far *old_keyhandler)(void);
+
 void interrupt far keyhandler()
 {
-    oldreadch = readch;
+    uint8_t key_scan = 0;
+    static uint8_t key_scan_last = 0;
+    static uint8_t key_special = 0;
+    static uint8_t key_special_last = 0;
+    // obtain scancode
     asm {
-        in al, 0x60
-        mov readch, al
-        in al, 0x61
-        or al, 0x80
-        out 0x61, al
-        and al, 0x7f
-        out 0x61, al
+        cli // clear interrupt flag; prevent other external interrupts
+        in  al, 0x60
+        mov key_scan, al
+        in  al, 0x61 // get keyboard status
+        mov bl, al
+        or  al, 0x80 // MSB set
+        out 0x61, al // write (ACK)
+        mov al, bl   // MSB clear
+        out 0x61, al // write
     }
-    if (readch == 0xe0)
-        extended = 128;
-    else
+    // remember the last special key code
+    if (key_scan_last == KEY_SPECIAL_CODE)
+        key_special = key_scan;
+    else if (key_scan != KEY_SPECIAL_CODE)
+        key_special = 0;
+    // place scancode on queue unless it's the same as the previous one
+    if (key_scan != key_scan_last && (key_special != key_special_last || key_special_last == 0))
     {
-        if (oldreadch != readch)
-            kb_queue[(readch&127)+extended] = ((readch>>7)^1);
-        extended = 0;
+        g_Input->kb_queue[g_Input->kb_tail] = key_scan;
+        if (g_Input->kb_tail+1 != g_Input->kb_head)
+            g_Input->kb_tail++;
     }
+    key_scan_last = key_scan;
+    key_special_last = key_special;
+    // PIC 8259 reset
     asm {
         mov al, 0x20
         out 0x20, al
+        sti // set interrupt flag; allow external interrupts again
     }
-    
-    kb_queue[kb_queue_tail++] = readch;
 }
-
-void (interrupt far *oldkeyhandler)();
 
 void init_keyboard()
 {
-    oldkeyhandler = _dos_getvect(0x9);
-    _disable(); _dos_setvect(0x9, keyhandler); _enable();
-    memset(kb_array, 0, 128);
+    uint8_t far *bios_key_state;
+    asm cli
+    // save address of current keyhandler interrupt function
+    old_keyhandler = _dos_getvect(9);
+    // caps lock & num lock off
+    bios_key_state = MK_FP(0x040, 0x017);
+    *bios_key_state &= (~(32|64));
+    old_keyhandler(); 
+    // replace old keyhandler with new keyhandler function
+    _dos_setvect(9, keyhandler);
+    asm sti
+}
+
+int initInput(Input_t* input)
+{
+    g_Input = input;
+    g_Keyboard = input->kb_array;
+    init_keyboard();
+
+    return 0;
 }
 
 void deinit_keyboard()
 {
-   _disable(); _dos_setvect(0x9, oldkeyhandler); _enable();
+    // restore old keyhandler
+    asm cli
+    _dos_setvect(9, old_keyhandler);
+    asm sti
+
+    g_Input = NULL;
 }
 
 void control_menu(struct GameData* g)
 {
-    if (WAS_HIT(KEY_SPACE))
+    if (KEY_WAS_HIT(KEY_SPACE))
         start_game(g);
 }
 
 void control_end(struct GameData* g)
 {
-    if (WAS_HIT(KEY_SPACE))
+    if (KEY_WAS_HIT(KEY_SPACE))
         g->game_state = GAME_MENU;
 }
 
 void control_ingame(struct GameData* g)
-{    
+{
     static axis = 0;
     struct Actor* player = g->Actors+0; // same as &g->Actors[0]
     
     player->x_vel = 0;
     player->y_vel = 0;
     
-    if (WAS_HIT(KEY_UP) || WAS_HIT(KEY_DOWN))
+    if (KEY_WAS_HIT(KEY_UP) || KEY_WAS_HIT(KEY_DOWN))
     {
         axis = Y_AXIS;
         player->y_vel =
-        (WAS_HIT(KEY_DOWN)>>1) - (WAS_HIT(KEY_UP)>>1);
+        KEY_WAS_HIT(KEY_DOWN) - KEY_WAS_HIT(KEY_UP);
     }
-    else if (WAS_HIT(KEY_LEFT) || WAS_HIT(KEY_RIGHT))
+    else if (KEY_WAS_HIT(KEY_LEFT) || KEY_WAS_HIT(KEY_RIGHT))
     {
         axis = X_AXIS;
         player->x_vel =
-        (WAS_HIT(KEY_RIGHT)>>1) - (WAS_HIT(KEY_LEFT)>>1);
+        KEY_WAS_HIT(KEY_RIGHT) - KEY_WAS_HIT(KEY_LEFT);
     }
     else if (axis == Y_AXIS)
     {
         player->y_vel =
-        IS_PRESSED(KEY_DOWN) - IS_PRESSED(KEY_UP);
+        (KEY_IS_PRESSED(KEY_DOWN)>>1) - (KEY_IS_PRESSED(KEY_UP)>>1);
         
         if (player->y_vel == 0)
             player->x_vel =
-            IS_PRESSED(KEY_RIGHT) - IS_PRESSED(KEY_LEFT);
+            (KEY_IS_PRESSED(KEY_RIGHT)>>1) - (KEY_IS_PRESSED(KEY_LEFT)>>1);
     }
     else if (axis == X_AXIS)
     {
         player->x_vel =
-        IS_PRESSED(KEY_RIGHT) - IS_PRESSED(KEY_LEFT);
+        (KEY_IS_PRESSED(KEY_RIGHT)>>1) - (KEY_IS_PRESSED(KEY_LEFT)>>1);
         
         if (player->x_vel == 0)
             player->y_vel =
-            IS_PRESSED(KEY_DOWN) - IS_PRESSED(KEY_UP);
+            (KEY_IS_PRESSED(KEY_DOWN)>>1) - (KEY_IS_PRESSED(KEY_UP)>>1);
     }
     
     // clear collision flags
@@ -108,13 +140,13 @@ void control_ingame(struct GameData* g)
     //g->Actors[0].coll_y = 0;
 
     // Misc
-    if (WAS_HIT(KEY_Q) && WAS_HIT(KEY_BKSPC) && g->debugmode == 0)
+    if (KEY_WAS_HIT(KEY_Q) && KEY_WAS_HIT(KEY_BACKSPACE) && g->debugmode == 0)
     {
         g->debugmode = 1;
         debug_screen_e();
     }
     
-    else if (WAS_HIT(KEY_Q) && WAS_HIT(KEY_BKSPC) && g->debugmode == 1)
+    else if (KEY_WAS_HIT(KEY_Q) && KEY_WAS_HIT(KEY_BACKSPACE) && g->debugmode == 1)
     {
         g->debugmode = 0;
         debug_screen_d();
@@ -122,60 +154,54 @@ void control_ingame(struct GameData* g)
     
     if (g->debugmode == 1)
     {
-        if (WAS_HIT(KEY_CHEAT_K))
+        if (KEY_WAS_HIT(KEY_K))
             add_key(g);
-        else if (WAS_HIT(KEY_CHEAT_L))
+        else if (KEY_WAS_HIT(KEY_L))
             add_life(g);
-        else if (WAS_HIT(KEY_CHEAT_D))
+        else if (KEY_WAS_HIT(KEY_D))
             remove_life(g);
-        else if (WAS_HIT(KEY_CHEAT_S))
+        else if (KEY_WAS_HIT(KEY_S))
             level_skip(g);
     }
 }
 
 void get_keyboard()
 {
-    int key;
-    
-    while (kb_queue_head != kb_queue_tail)
+    int i;
+    uint8_t key_scan;
+    uint8_t extended = 0;
+    uint8_t released = 0;
+
+    while (g_Input->kb_head != g_Input->kb_tail)
     {
-        key = kb_queue[kb_queue_head];
-        kb_queue_head++;
-     
-        /* key pressed down code (0-127) */
-        if (key < 128)
+        key_scan = g_Input->kb_queue[g_Input->kb_head++];
+        /* handle special keys, but only if a second scancode follows
+        if (key_scan == KEY_SPECIAL_CODE)
         {
-            /* if the key was not pressed down before, set the KEY_HIT bit (2nd bit) on */
-            if ( (kb_array[key] & KEY_PRESSED) == 0)
-                kb_array[key] |= KEY_HIT;
-            
-            /* in any case, set the KEY_PRESSED bit (1st bit) on */
-            kb_array[key] |= KEY_PRESSED;
+            if (g_Input->kb_head != g_Input->kb_tail)
+                extended = 128;
+            continue;
+        }*/
+        // remember the release flag before clearing it
+        released = key_scan & KEY_RELEASED_FLAG;
+        key_scan &= ~KEY_RELEASED_FLAG;
+        if (released)
+        {
+            g_Input->kb_array[key_scan+extended] &= KEY_HIT_FLAG;
+            g_Input->kb_array[key_scan+extended] |= KEY_RELEASED_FLAG;
         }
-        /* key released code (128-255) */
         else
-        {
-            /* if there was something else than 000000000 for this key, and
-             we detect a key release, then set KEY_REL bit (3rd bit, binary value of 4) on */
-            if (kb_array[key-128] & KEY_PRESSED)
-                kb_array[key-128] |= KEY_REL;
-            
-            /* in any case, clear the KEY_PRESSED bit (1st bit), off */
-            kb_array[key-128] &= (~KEY_PRESSED);
-        }
+            g_Input->kb_array[key_scan+extended] |= (KEY_HIT_FLAG|KEY_PRESSED_FLAG);
+
+        extended = 0;
     }
 }
 
 void clear_keys()
 {
-    int i = 0;
-    
-    while (i < 128)
-    {
-        kb_array[i] &= (~KEY_HIT);
-        kb_array[i] &= (~KEY_REL);
-        i++;
-    }
+    int i;
+    for (i = 0; i < KB_ARRAY_LENGTH; i++)
+        g_Input->kb_array[i] &= KEY_PRESSED_FLAG;
 }
 
 void process_input(struct GameData* g)
@@ -190,8 +216,8 @@ void process_input(struct GameData* g)
         control_ingame(g);
     
     // esc always exits, wherever you are
-    if (WAS_HIT(KEY_ESC))
+    if (KEY_WAS_HIT(KEY_ESC))
         g->game_running = 0;
-    
+
     clear_keys();
 }

@@ -48,11 +48,11 @@ struct GameData
     /*int new_game;*/
 
     uint8_t tile_data[1000];
-    uint8_t actor_data[1000];   
+    uint8_t object_map[1000];   
     int level_num;
     int level_width;
     int level_height;
-    int8_t player_lives;    
+    int8_t player_lives;
     int keys_acquired;
     int actor_count;    
 
