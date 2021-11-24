@@ -1,5 +1,5 @@
-#include "Gfx.h"
 #include "Shared.h"
+#include "Gfx.h"
 
 // globals
 uint8_t far *VGA=(uint8_t *)0xA0000000L;        /* this points to video memory. */

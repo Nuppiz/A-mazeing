@@ -48,7 +48,7 @@ void init(struct GameData* g)
     g->game_state = GAME_MENU;
     
     /* init keyboard */
-    initInput();
+    init_keyboard();
 }
 
 void quit()
@@ -57,7 +57,7 @@ void quit()
     set_mode(TEXT_MODE);
 }
 
-int main()
+void main()
 {
     /* local variables all inside GameData struct called g */
     struct GameData g;
@@ -77,6 +77,4 @@ int main()
     
     /* quit */
     quit();
-    
-    return 0;
 }

@@ -1,5 +1,5 @@
-#include "Gameplay.h"
 #include "Shared.h"
+#include "Gameplay.h"
 
 extern struct GameData g;
 

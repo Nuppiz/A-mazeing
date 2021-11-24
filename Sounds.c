@@ -1,5 +1,5 @@
-#include "Sounds.h"
 #include "Shared.h"
+#include "Sounds.h"
 
 uint16_t notes[11] = {277, 294, 311, 330, 349, 370, 392, 415, 440, 466, 494};
 
