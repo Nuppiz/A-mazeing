@@ -304,7 +304,7 @@ void render_stats(struct GameData* g)
         render_text(230, 1, lives_str, 15);
     else if (g->player_lives > 99)
         render_text(230, 1, "LIVES: 99", 15);
-    else if (g->player_lives >= -1)
+    else if (g->player_lives > -2)
         render_text(230, 1, "LIVES: 0", 15);
 }
 
