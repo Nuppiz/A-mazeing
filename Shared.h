@@ -56,6 +56,7 @@ struct GameData
     int game_running;
     int game_state;
     uint8_t debugmode;
+    uint8_t music_enabled;
     /*int new_game;*/
 
     int level_num;

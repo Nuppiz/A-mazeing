@@ -5,12 +5,6 @@
 #include "LvlLoad.h"
 #include "Sounds.h"
 
-extern char* lvl;
-extern char* keys;
-extern char* lives;
-
-// function definitions
-
 void set_cursor(int x, int y)
 {
     // Escape code to set the cursor position
@@ -25,6 +19,7 @@ void start_game(struct GameData* g)
     fill_screen(0);
     g->game_state = GAME_INGAME;
     g->debugmode = 0;
+    g->music_enabled = 1;
     g->level_num = 1;
     g->player_lives = 3;
     level_loader(g);
@@ -71,8 +66,13 @@ void main()
         process_input(&g);
         game_logic(&g);
         render(&g);
-        //play_audio(&g);
-        delay(100);
+        if (g.music_enabled == 1)
+        {
+            play_song();
+            delay(75);
+        }
+        else
+            delay(100);
     }
     
     /* quit */

@@ -79,6 +79,10 @@ void control_menu(struct GameData* g)
 {
     if (KEY_WAS_HIT(KEY_SPACE))
         start_game(g);
+    else if (KEY_WAS_HIT(KEY_M) && g->music_enabled == 1)
+        g->music_enabled = 0;
+    else if (KEY_WAS_HIT(KEY_M) && g->music_enabled == 0)
+        g->music_enabled = 1;
 }
 
 void control_end(struct GameData* g)
@@ -142,6 +146,11 @@ void control_ingame(struct GameData* g)
         g->debugmode = 0;
         debug_screen_d();
     }
+
+    else if (KEY_WAS_HIT(KEY_M) && g->music_enabled == 1)
+        g->music_enabled = 0;
+    else if (KEY_WAS_HIT(KEY_M) && g->music_enabled == 0)
+        g->music_enabled = 1;
     
     if (g->debugmode == 1)
     {

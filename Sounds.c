@@ -1,6 +1,8 @@
 #include "Shared.h"
 #include "Sounds.h"
 
+int8_t note_i;
+uint8_t song_i;
 uint16_t notes[11] = {277, 294, 311, 330, 349, 370, 392, 415, 440, 466, 494};
 
 void init_speaker()
@@ -54,10 +56,22 @@ void note_loop_down(int note_length, int max_freq, int min_freq)
 }
 
 void play_song()
-{    
+{
+
     init_speaker();
-    note_loop_up(1, 10, 4000);
-    note_loop_down(1, 4000, 10);
+    play_note(notes[note_i], 25);
+    if (song_i < 10)
+    {
+        note_i++;
+        song_i++;
+    }
+    else if (song_i >= 10 && song_i < 20)
+    {
+        note_i--;
+        song_i++;
+    }
+    if (song_i >= 20)
+        song_i = 0;
     close_speaker();
 }
 
