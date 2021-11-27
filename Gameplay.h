@@ -8,6 +8,7 @@ void remove_key();
 void add_life();
 void remove_life();
 void level_skip();
+void suicide();
 void move_actors();
 void player_hit_detect();
 void check_state();

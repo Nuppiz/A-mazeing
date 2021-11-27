@@ -153,6 +153,8 @@ void control_ingame(struct GameData* g)
             remove_life(g);
         else if (KEY_WAS_HIT(KEY_S))
             level_skip(g);
+        else if (KEY_WAS_HIT(KEY_HOME))
+            suicide(g);
     }
 }
 

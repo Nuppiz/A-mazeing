@@ -66,6 +66,11 @@ void level_skip(struct GameData* g)
     g->game_state = GAME_WIN;
 }
 
+void suicide(struct GameData* g)
+{
+    g->game_state = GAME_OVER;
+}
+
 void move_actors(struct GameData* g)
 {
     int new_x, new_y;
@@ -169,6 +174,7 @@ void player_hit_detect(struct GameData* g)
         {
             p->x -= p->x_vel;
             p->y -= p->y_vel;
+            sound_door_c();
         }
         // otherwise, we remain in the door tile and change tile to DOOR_O
         else
@@ -176,6 +182,7 @@ void player_hit_detect(struct GameData* g)
             remove_key(g);
             SET_TILE(p->x, p->y, TILE_DOOR_O);
             render_door(g, p->x, p->y);
+            sound_door_o();
         }
     }
     // exit and win the level
