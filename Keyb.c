@@ -65,15 +65,6 @@ void init_keyboard()
     asm sti
 }
 
-int initInput(Input_t* input)
-{
-    g_Input = input;
-    g_Keyboard = input->kb_array;
-    init_keyboard();
-
-    return 0;
-}
-
 void deinit_keyboard()
 {
     // restore old keyhandler
@@ -175,13 +166,9 @@ void get_keyboard()
     while (g_Input->kb_head != g_Input->kb_tail)
     {
         key_scan = g_Input->kb_queue[g_Input->kb_head++];
-        /* handle special keys, but only if a second scancode follows
+        //handle special keys, but only if a second scancode follows
         if (key_scan == KEY_SPECIAL_CODE)
-        {
-            if (g_Input->kb_head != g_Input->kb_tail)
                 extended = 128;
-            continue;
-        }*/
         // remember the release flag before clearing it
         released = key_scan & KEY_RELEASED_FLAG;
         key_scan &= ~KEY_RELEASED_FLAG;

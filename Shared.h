@@ -6,6 +6,12 @@
 #define VGA_256_COLOR_MODE  0x13      /* use to set 256-color mode. */
 #define TEXT_MODE           0x03      /* use to set 80x25 text mode. */
 
+#define SCREEN_WIDTH        320       /* width in pixels */
+#define SCREEN_HEIGHT       200       /* height in pixels */
+
+#define TILE_WIDTH          8
+#define TILE_HEIGHT         8
+
 #define GAME_MENU           0
 #define GAME_INGAME         1
 #define GAME_OVER           2
@@ -13,12 +19,17 @@
 #define GAME_END            4
 
 #define MAX_ACTORS          10
-#define LEVEL_SIZE          level_width*level_height
+#define LEVEL_SIZE          level_width * level_height
 
-#define ACTOR_PLAYER        0
-#define ACTOR_GUARD         1
-#define ACTOR_GRAVE         2   
-#define ACTOR_EXPLO         3
+#define ACTOR_EMPTY         0
+#define ACTOR_PLAYER        1
+#define ACTOR_GUARD         2
+#define ACTOR_GRAVE         3   
+#define ACTOR_EXPLO         4
+
+#define MAPSIZE             1000
+
+#define LAST_LEVEL          3
 
 #define TILE_WALL           87
 #define TILE_FLOOR          45
@@ -36,7 +47,7 @@
 
 struct Actor
 {
-    int8_t x, y, x_vel, y_vel, type;
+    int8_t x, y, x_vel, y_vel, type, old_x, old_y;
     int8_t direction;
 };
 
@@ -47,14 +58,16 @@ struct GameData
     uint8_t debugmode;
     /*int new_game;*/
 
-    uint8_t tile_data[1000];
-    uint8_t object_map[1000];   
     int level_num;
     int level_width;
     int level_height;
+    int render_offset_x;
+    int render_offset_y;
+    uint8_t tile_data[MAPSIZE];
+    uint8_t object_map[MAPSIZE];
     int8_t player_lives;
     int keys_acquired;
-    int actor_count;    
+    int actor_count;
 
     struct Actor Actors[MAX_ACTORS];
 };

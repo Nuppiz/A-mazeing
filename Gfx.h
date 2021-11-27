@@ -6,13 +6,9 @@
 #define SET_MODE            0x00      /* BIOS func to set the video mode. */
 #define EGA_16_COLOR_MODE   0xD
 
-#define SCREEN_WIDTH        320       /* width in pixels */
-#define SCREEN_HEIGHT       200       /* height in pixels */
 #define SCREEN_SIZE         64000
 #define NUM_COLORS          256        /* number of colors in VGA */
 
-#define TILE_WIDTH          8
-#define TILE_HEIGHT         8
 #define TILE_AREA           TILE_WIDTH*TILE_HEIGHT
 #define CHARACTER_SIZE      72
 
@@ -27,6 +23,7 @@ void draw_shadow();
 void draw_text();
 void render_text();
 void typewriter();
+void render_maze();
 void render_maze();
 void render_actors();
 void render_menu();

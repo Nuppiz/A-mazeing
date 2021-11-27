@@ -43,7 +43,6 @@ void init(struct GameData* g)
 
     /* init gamedata */
     init_gamedata(g);
-    g->level_num = 1;
     g->game_running = 1;
     g->game_state = GAME_MENU;
     
