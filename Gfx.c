@@ -494,7 +494,7 @@ void render(struct GameData* g)
     else if (g->game_state == GAME_MENU)
     {
         render_menu();
-        render_text(200, 1, "VER. 0.0003A", 0);
+        render_text(200, 1, "VER. 0.0010A", 0);
     }
     // if end ...
     else if (g->game_state == GAME_END)

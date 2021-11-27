@@ -23,7 +23,7 @@ void draw_shadow();
 void draw_text();
 void render_text();
 void typewriter();
-void render_maze();
+void render_stats();
 void render_maze();
 void render_actors();
 void render_menu();
