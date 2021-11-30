@@ -62,7 +62,7 @@ void load_file(char* inname)
 	printf("Total file size: %u bytes\n", filesize);
 	printf("\n");
 	
-    printf("Allocating memory...");
+	printf("Allocating memory...");
 	buffer = malloc(filesize);
 	printf("\n");
 	
@@ -102,7 +102,7 @@ void menu()
 	char response;
 
 	// take in the file input name
-    printf("Enter file to convert (without file extension):\n");
+	printf("Enter file to convert (without file extension):\n");
 	scanf("%s", inputname);
 	sprintf(inname, "%s.bmp", inputname);
 	
@@ -110,7 +110,7 @@ void menu()
 	load_file(inname);
     
 	// take in the file output name
-    printf("Enter output name (without file extension)\n");
+	printf("Enter output name (without file extension)\n");
 	printf("or write 'same' to save with the BMP name:\n");
 	scanf("%s", outputname);
 	
@@ -135,13 +135,12 @@ void menu()
 	free(buffer);
     
 	// ask if user wants to convert another file, or quit
-    printf("Y to convert another file, or N to quit.\n");
-    scanf (" %c", &response);
-    if (response == 'y' || response == 'Y')
-        running = 1;
-
-    else if (response == 'n' || response == 'N')
-        running = 0;
+	printf("Y to convert another file, or N to quit.\n");
+	scanf (" %c", &response);
+	if (response == 'y' || response == 'Y')
+		running = 1;
+	else if (response == 'n' || response == 'N')
+		running = 0;
 }
 
 int main()
