@@ -13,6 +13,7 @@ int width;
 int height;
 int checksum1;
 int checksum2;
+int running = 1;
 
 void load_file(char* inname)
 {
@@ -51,18 +52,18 @@ void load_file(char* inname)
 	
 	fseek(file_ptr, 18, SEEK_SET);
 	fread(&width, 2, 1, file_ptr);
-	printf("Checking file width... %upx\n", width);
+	printf("Checking file width... %dpx\n", width);
 	fseek(file_ptr, 22, SEEK_SET);
 	fread(&height, 2, 1, file_ptr);
-	printf("Checking file height... %upx\n", height);
+	printf("Checking file height... %dpx\n", height);
 	printf("Checking file dimensions complete!\n");
 	
 	filesize = width * height;
 	printf("Total file size: %u bytes\n", filesize);
 	printf("\n");
 	
+    printf("Allocating memory...");
 	buffer = malloc(filesize);
-	printf("Allocating memory...");
 	printf("\n");
 	
 	printf("Starting to read first line...\n");
@@ -81,7 +82,7 @@ void load_file(char* inname)
 		c = fgetc(file_ptr);
 		j++;
 	}
-		
+	
 	printf("\nFile read successfully!\n");
 	fclose(file_ptr);
 	printf("\n");
@@ -96,15 +97,20 @@ void save_file(char* outname, uint8_t* source_data, uint16_t data_size)
 	fclose(file_ptr);
 }
 
-void main()
-{	
-	printf("Enter file to convert (without file extension):\n");
+void menu()
+{
+	char response;
+
+	// take in the file input name
+    printf("Enter file to convert (without file extension):\n");
 	scanf("%s", inputname);
 	sprintf(inname, "%s.bmp", inputname);
 	
+	// load file into buffer
 	load_file(inname);
-	
-	printf("Enter output name (without file extension)\n");
+    
+	// take in the file output name
+    printf("Enter output name (without file extension)\n");
 	printf("or write 'same' to save with the BMP name:\n");
 	scanf("%s", outputname);
 	
@@ -115,7 +121,32 @@ void main()
 		sprintf(outname, "%s.7UP", outputname);
 	
 	printf("Writing file: %s\n", outname);
+
+	// save file to 7UP format
 	save_file(outname, buffer, filesize);
+
 	printf("BMP successfully converted into %s!\n", outname);
-	getchar();
+
+	//clear memory
+	inputname [0] = '\0';
+	outputname [0] = '\0';
+	inname [0] = '\0';
+	outname [0] = '\0';
+	free(buffer);
+    
+	// ask if user wants to convert another file, or quit
+    printf("Y to convert another file, or N to quit.\n");
+    scanf (" %c", &response);
+    if (response == 'y' || response == 'Y')
+        running = 1;
+
+    else if (response == 'n' || response == 'N')
+        running = 0;
+}
+
+int main()
+{
+	while (running == 1)
+		menu();
+	return 0;
 }
