@@ -58,17 +58,17 @@ void load_file(char* inname)
 	printf("Total file size: %u bytes\n", filesize);
 	printf("\n");
 	
-    printf("Allocating memory...");
+    	printf("Allocating memory...");
 	buffer = (uint8_t far*)malloc(filesize);
 	printf("\n");
 	
 	printf("Starting to read first line...\n");
 	
-    fseek(file_ptr, 1078, SEEK_SET);
-    fread(buffer, 1, filesize, file_ptr);
-    fclose(file_ptr);
+	fseek(file_ptr, 1078, SEEK_SET);
+	fread(buffer, 1, filesize, file_ptr);
+	fclose(file_ptr);
 	
-    printf("\n%u bytes read!\n", filesize);
+	printf("\n%u bytes read!\n", filesize);
 	printf("\nFile read successfully!\n");
 	fclose(file_ptr);
 	printf("\n");
@@ -76,18 +76,17 @@ void load_file(char* inname)
 
 void save_file(char* outname)
 {
-    int16_t y, x;
-    FILE* file_ptr = fopen(outname, "wb+");
-    
-    for (y = height-1; y >= 0; y--)
-    {
-        for (x = 0; x < width; x++)
-        {
-            fputc(buffer[(y*width)+x], file_ptr);
-        }
-    }
-
-    fclose(file_ptr);
+	int16_t y, x;
+	FILE* file_ptr = fopen(outname, "wb+");
+	
+	for (y = height-1; y >= 0; y--)
+	{
+		for (x = 0; x < width; x++)
+		{
+			fputc(buffer[(y*width)+x], file_ptr);
+		}
+	}
+	fclose(file_ptr);
 }
 
 void menu()
@@ -95,7 +94,7 @@ void menu()
 	char response;
 
 	// take in the file input name
-    printf("Enter file to convert (without file extension):\n");
+	printf("Enter file to convert (without file extension):\n");
 	scanf("%s", inputname);
 	sprintf(inname, "%s.bmp", inputname);
 	
@@ -103,7 +102,7 @@ void menu()
 	load_file(inname);
     
 	// take in the file output name
-    printf("Enter output name (without file extension)\n");
+	printf("Enter output name (without file extension)\n");
 	printf("or write 'same' to save with the BMP name:\n");
 	scanf("%s", outputname);
 	
@@ -128,13 +127,12 @@ void menu()
 	farfree(buffer);
     
 	// ask if user wants to convert another file, or quit
-    printf("Y to convert another file, or N to quit.\n");
-    scanf (" %c", &response);
-    if (response == 'y' || response == 'Y')
-        running = 1;
-
-    else if (response == 'n' || response == 'N')
-        running = 0;
+	printf("Y to convert another file, or N to quit.\n");
+	scanf (" %c", &response);
+	if (response == 'y' || response == 'Y')
+		running = 1;
+	else if (response == 'n' || response == 'N')
+		running = 0;
 }
 
 int main()
