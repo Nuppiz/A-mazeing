@@ -12,11 +12,17 @@
 #define TILE_AREA           TILE_WIDTH*TILE_HEIGHT
 #define CHARACTER_SIZE      72
 
+void set_tile_gfx();
 void set_mode();
 void fill_screen();
+void load_gfx();
 void load_sprite();
-void load_graphics();
+void load_tiles();
+void load_special_gfx();
+void composite_sprite();
+void create_composites();
 void draw_sprite();
+void draw_temp();
 void draw_sprite_tr();
 void draw_big();
 void draw_shadow();

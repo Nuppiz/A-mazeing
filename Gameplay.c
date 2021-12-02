@@ -88,7 +88,7 @@ void move_actors(struct GameData* g)
         new_y = p_actor->y + p_actor->y_vel;
         
         // if it's NOT a wall, then move into the square and clear the previous grid slot
-        if (TILE_AT(new_x, new_y) != TILE_WALL && p_actor->type == ACTOR_PLAYER)
+        if (TILE_AT(new_x, new_y) != 'W' && p_actor->type == ACTOR_PLAYER)
         {
             p_actor->x = new_x;
             p_actor->y = new_y;
@@ -112,7 +112,7 @@ void move_actors(struct GameData* g)
             }
         }
 
-        else if (TILE_AT(new_x, new_y) != TILE_WALL && p_actor->type == ACTOR_GUARD)
+        else if (TILE_AT(new_x, new_y) != 'W' && p_actor->type == ACTOR_GUARD)
         {
             p_actor->x = new_x;
             p_actor->y = new_y;
@@ -149,7 +149,7 @@ void player_hit_detect(struct GameData* g)
     struct Actor* p = &g->Actors[0];
     
     // step on mine
-    if (ACTOR_ON_TILE(p, ITEM_MINE))
+    if (ACTOR_ON_TILE(p, '^'))
     {
         p->type = ACTOR_EXPLO;
         remove_life(g);
@@ -160,14 +160,14 @@ void player_hit_detect(struct GameData* g)
             player_death(g);
     }
     // collect key
-    else if (ACTOR_ON_TILE(p, ITEM_KEY))
+    else if (ACTOR_ON_TILE(p, '*'))
     {
         add_key(g);
-        SET_TILE(p->x, p->y, TILE_FLOOR);
+        SET_TILE(p->x, p->y, '-');
         render_floor(g, p->x, p->y);
     }
     // try to open door
-    else if (ACTOR_ON_TILE(p, TILE_DOOR_C))
+    else if (ACTOR_ON_TILE(p, '|'))
     {
         // no keys; door remains closed, so cancel movement
         if (g->keys_acquired < 1)
@@ -180,13 +180,13 @@ void player_hit_detect(struct GameData* g)
         else
         {
             remove_key(g);
-            SET_TILE(p->x, p->y, TILE_DOOR_O);
+            SET_TILE(p->x, p->y, '-');
             render_door(g, p->x, p->y);
             sound_door_o();
         }
     }
     // exit and win the level
-    else if (ACTOR_ON_TILE(p, TILE_EXIT))
+    else if (ACTOR_ON_TILE(p, 'e'))
         g->game_state = GAME_WIN;
 }
 

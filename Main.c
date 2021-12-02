@@ -35,7 +35,10 @@ void init(struct GameData* g)
 {       
     /* init gfx */
     set_mode(VGA_256_COLOR_MODE);
-    load_graphics();
+    load_tiles();
+    load_special_gfx();
+    set_tile_gfx();
+    create_composites();
 
     /* init gamedata */
     init_gamedata(g);

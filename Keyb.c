@@ -129,10 +129,6 @@ void control_ingame(struct GameData* g)
             player->y_vel =
             (KEY_IS_PRESSED(KEY_DOWN)>>1) - (KEY_IS_PRESSED(KEY_UP)>>1);
     }
-    
-    // clear collision flags
-    //g->Actors[0].coll_x = 0;
-    //g->Actors[0].coll_y = 0;
 
     // Misc
     if (KEY_WAS_HIT(KEY_Q) && KEY_WAS_HIT(KEY_BACKSPACE) && g->debugmode == 0)

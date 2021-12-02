@@ -31,13 +31,13 @@
 
 #define LAST_LEVEL          3
 
-#define TILE_WALL           87
+/*#define TILE_WALL           87
 #define TILE_FLOOR          45
 #define TILE_DOOR_C         124
 #define TILE_DOOR_O         250
 #define TILE_EXIT           101
 #define ITEM_KEY            42
-#define ITEM_MINE           94
+#define ITEM_MINE           94*/
 
 #define TICKS               (*(volatile unsigned long far *)(0x0040006CL))
 
@@ -71,4 +71,27 @@ struct GameData
     int actor_count;
 
     struct Actor Actors[MAX_ACTORS];
+};
+
+enum SPRITES
+{
+    TILE_FLOOR,
+    TILE_WALL,
+    TILE_DOOR_C,
+    TILE_DOOR_O,
+    TILE_EXIT,
+    ITEM_KEY,
+    ITEM_MINE,
+    ENT_PLAYER,
+    ENT_GUARD,
+    ENT_EXPLO,
+    ENT_GRAVE,
+    ENT_ERROR,
+    SHAD_IN_COR,
+    SHAD_HORZ,
+    SHAD_VERT,
+    SHAD_OUT_COR,
+    SHAD_MINE,
+    SHAD_KEY,
+    NUM_SPRITES
 };

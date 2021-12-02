@@ -10,26 +10,24 @@ union REGS regs;
 extern struct GameData g;
 
 // reserve memory for sprites
-uint8_t far splash_screen   [64000];
-uint8_t brick_wall      [TILE_AREA];
-uint8_t player_sprite   [TILE_AREA];
-uint8_t guard_sprite    [TILE_AREA];
-uint8_t key_sprite      [TILE_AREA];
-uint8_t floor_sprite    [TILE_AREA];
-uint8_t door_c_sprite   [TILE_AREA];
-uint8_t door_o_sprite   [TILE_AREA];
-uint8_t exit_sprite     [TILE_AREA];
-uint8_t error_sprite    [TILE_AREA];
-uint8_t mine_sprite     [TILE_AREA];
-uint8_t expl_sprite     [TILE_AREA];
-uint8_t grave_sprite    [TILE_AREA];
-uint8_t shad_in_cor     [TILE_AREA];
-uint8_t shad_horz       [TILE_AREA];
-uint8_t shad_vert       [TILE_AREA];
-uint8_t shad_out_cor    [TILE_AREA];
-uint8_t shad_mine       [TILE_AREA];
-uint8_t shad_key        [TILE_AREA];
-uint8_t alphabet        [4240];
+uint8_t far splash_screen [64000];
+uint8_t alphabet [4240];
+uint8_t sprites[NUM_SPRITES][TILE_AREA];
+uint8_t temp_tile [64];
+
+uint8_t* gfx_table[256];
+
+void set_tile_gfx()
+{
+    _fmemset(gfx_table, ENT_ERROR, 256);
+    gfx_table['W'] = sprites[TILE_WALL];
+    gfx_table['-'] = sprites[TILE_FLOOR];
+    gfx_table['e'] = sprites[TILE_EXIT];
+    gfx_table['|'] = sprites[TILE_DOOR_C];
+    gfx_table['_'] = sprites[TILE_DOOR_O];
+    gfx_table['*'] = sprites[ITEM_KEY];
+    gfx_table['^'] = sprites[ITEM_MINE];
+}
 
 void set_mode(uint8_t mode)
 {
@@ -43,36 +41,62 @@ void fill_screen(uint8_t color)
     _fmemset(screen_buf, color, SCREEN_SIZE);
 }
 
-void load_sprite(char* filename, uint8_t* source_data, uint16_t data_size)
+void load_gfx(char* filename, uint8_t* destination, uint16_t data_size)
 {
     FILE* file_ptr;
     file_ptr = fopen(filename, "rb");
-    fread(source_data, 1, data_size, file_ptr);
+    fread(destination, 1, data_size, file_ptr);
     fclose(file_ptr);
 }
 
-void load_graphics()
+void load_sprite(int tile_id, char* filename)
 {
-    load_sprite("GFX/SPLASH.7UP", splash_screen, 64000);
-    load_sprite("GFX/FLOOR.7UP", floor_sprite, 64);
-    load_sprite("GFX/BRICKS.7UP", brick_wall, 64);
-    load_sprite("GFX/PLAYER.7UP", player_sprite, 64);
-    load_sprite("GFX/GUARD.7UP", guard_sprite, 64);
-    load_sprite("GFX/KEY.7UP", key_sprite, 64);
-    load_sprite("GFX/DOORC.7UP", door_c_sprite, 64);
-    load_sprite("GFX/DOORO.7UP", door_o_sprite, 64);
-    load_sprite("GFX/EXIT.7UP", exit_sprite, 64);
-    load_sprite("GFX/ERROR.7UP", error_sprite, 64);
-    load_sprite("GFX/MINE.7UP", mine_sprite, 64);
-    load_sprite("GFX/EXPLO.7UP", expl_sprite, 64);
-    load_sprite("GFX/GRAVE.7UP", grave_sprite, 64);
-    load_sprite("GFX/SHAD_IC.7UP", shad_in_cor, 64);
-    load_sprite("GFX/SHAD_H.7UP", shad_horz, 64);
-    load_sprite("GFX/SHAD_V.7UP", shad_vert, 64);
-    load_sprite("GFX/SHAD_OC.7UP", shad_out_cor, 64);
-    load_sprite("GFX/SHAD_M.7UP", shad_mine, 64);
-    load_sprite("GFX/SHAD_K.7UP", shad_key, 64);
-    load_sprite("GFX/FONT.7UP", alphabet, 4240);
+    FILE* file_ptr;
+    file_ptr = fopen(filename, "rb");
+    fread(sprites[tile_id], 1, TILE_AREA, file_ptr);
+    fclose(file_ptr);
+}
+
+void load_tiles()
+{
+    load_sprite(TILE_FLOOR, "GFX/FLOOR.7UP");
+    load_sprite(TILE_WALL, "GFX/BRICKS.7UP");
+    load_sprite(TILE_DOOR_C, "GFX/DOORC.7UP");
+    load_sprite(TILE_DOOR_O, "GFX/DOORO.7UP");
+    load_sprite(TILE_EXIT, "GFX/EXIT.7UP");
+    load_sprite(ITEM_KEY, "GFX/KEY.7UP");
+    load_sprite(ITEM_MINE, "GFX/MINE.7UP");
+    load_sprite(ENT_PLAYER, "GFX/PLAYER.7UP");
+    load_sprite(ENT_GUARD, "GFX/GUARD.7UP");
+    load_sprite(ENT_EXPLO, "GFX/EXPLO.7UP");
+    load_sprite(ENT_GRAVE, "GFX/GRAVE.7UP");
+    load_sprite(ENT_ERROR, "GFX/ERROR.7UP");
+    load_sprite(SHAD_IN_COR, "GFX/SHAD_IC.7UP");
+    load_sprite(SHAD_HORZ, "GFX/SHAD_H.7UP");
+    load_sprite(SHAD_VERT, "GFX/SHAD_V.7UP");
+    load_sprite(SHAD_OUT_COR, "GFX/SHAD_OC.7UP");
+    load_sprite(SHAD_MINE, "GFX/SHAD_M.7UP");
+    load_sprite(SHAD_KEY, "GFX/SHAD_K.7UP");
+}
+
+void load_special_gfx()
+{
+    load_gfx("GFX/SPLASH.7UP", splash_screen, 64000);
+    load_gfx("GFX/FONT.7UP", alphabet, 4240);
+}
+
+void composite_sprite(uint8_t* background, uint8_t* foreground, uint8_t* destination)
+{
+    draw_temp(background);
+    draw_temp(foreground);
+    _fmemcpy(destination, temp_tile, TILE_AREA);
+}
+
+void create_composites()
+{
+    composite_sprite(sprites[TILE_FLOOR], sprites[ITEM_MINE], sprites[ITEM_MINE]);
+    composite_sprite(sprites[TILE_FLOOR], sprites[ITEM_KEY], sprites[ITEM_KEY]);
+    composite_sprite(sprites[TILE_FLOOR], sprites[TILE_DOOR_C], sprites[TILE_DOOR_C]);
 }
 
 void draw_sprite(struct GameData* g, int x, int y, uint8_t* sprite)
@@ -95,6 +119,31 @@ void draw_sprite(struct GameData* g, int x, int y, uint8_t* sprite)
         index_x = 0;
         x -= TILE_WIDTH;
         y++;
+    }
+    index_y = 0;
+}
+
+void draw_temp(uint8_t* sprite)
+{
+    uint8_t index_x = 0;
+    uint8_t index_y = 0;
+    uint8_t i = 0;
+
+    for (index_y=0;index_y<TILE_HEIGHT;index_y++)
+    {
+        for (index_x=0;index_x<TILE_WIDTH;index_x++)
+        {
+            if (sprite[i] != 13)
+            {
+                temp_tile[i]=sprite[i];
+                i++;
+            }
+            else
+            {
+                i++;
+            }
+        }
+        index_x = 0;
     }
     index_y = 0;
 }
@@ -177,20 +226,52 @@ void draw_shadow(struct GameData* g, int x, int y)
 {    
     int pixel_x = x*TILE_WIDTH;
     int pixel_y = y*TILE_HEIGHT;
-    
-    if (TILE_AT(x-1, y-1) == TILE_WALL &&
-        TILE_AT(x,   y-1) == TILE_WALL &&
-        TILE_AT(x-1, y  ) == TILE_WALL)
-        draw_sprite_tr(g, pixel_x, pixel_y, shad_in_cor);
+
+    if (TILE_AT(x, y) == '-')
+    {
+        if (TILE_AT(x-1, y-1) == 'W' &&
+            TILE_AT(x,   y-1) == 'W' &&
+            TILE_AT(x-1, y  ) == 'W')
+            draw_sprite_tr(g, pixel_x, pixel_y, sprites[SHAD_IN_COR]);
+            
+        else if (TILE_AT(x, y-1) == 'W')
+            draw_sprite_tr(g, pixel_x, pixel_y, sprites[SHAD_HORZ]);
         
-    else if (TILE_AT(x, y-1) == TILE_WALL)
-        draw_sprite_tr(g, pixel_x, pixel_y, shad_horz);
-    
-    else if (TILE_AT(x-1, y) == TILE_WALL)
-        draw_sprite_tr(g, pixel_x, pixel_y, shad_vert);
-    
-    else if (TILE_AT(x-1, y-1) == TILE_WALL)
-        draw_sprite_tr(g, pixel_x, pixel_y, shad_out_cor);
+        else if (TILE_AT(x-1, y) == 'W')
+            draw_sprite_tr(g, pixel_x, pixel_y, sprites[SHAD_VERT]);
+        
+        else if (TILE_AT(x-1, y-1) == 'W')
+            draw_sprite_tr(g, pixel_x, pixel_y, sprites[SHAD_OUT_COR]);
+    }
+
+    else if (TILE_AT(x, y) == '^')
+    {
+        if (TILE_AT(x-1, y) == 'W' && TILE_AT(x, y-1) == 'W')
+        {
+            draw_sprite_tr (g, pixel_x, pixel_y, sprites[SHAD_MINE]);
+            draw_sprite_tr(g, pixel_x, pixel_y, sprites[SHAD_HORZ]);
+        }
+        else if  (TILE_AT(x-1, y) == 'W')
+            draw_sprite_tr (g, pixel_x, pixel_y, sprites[SHAD_MINE]);
+
+        else if (TILE_AT(x, y-1) == 'W')
+            draw_sprite_tr(g, pixel_x, pixel_y, sprites[SHAD_HORZ]);
+    }
+
+    else if (TILE_AT(x, y) == '*')
+    {
+
+        if (TILE_AT(x-1, y) == 'W' && TILE_AT(x, y-1) == 'W')
+        {
+            draw_sprite_tr (g, pixel_x, pixel_y, sprites[SHAD_KEY]);
+            draw_sprite_tr(g, pixel_x, pixel_y, sprites[SHAD_HORZ]);
+        }
+        else if  (TILE_AT(x-1, y) == 'W')
+            draw_sprite_tr (g, pixel_x, pixel_y, sprites[SHAD_KEY]);
+
+        else if (TILE_AT(x, y-1) == 'W')
+            draw_sprite_tr(g, pixel_x, pixel_y, sprites[SHAD_HORZ]);
+    }
 }
 
 void draw_text(int x, int y, int i, uint8_t color)
@@ -239,31 +320,21 @@ void render_text(int x, int y, char* string, uint8_t color)
 
 void render_floor(struct GameData* g, int x, int y) // used to empty tiles after an item is picked up
 {
-    draw_sprite     (g, x * TILE_WIDTH,y * TILE_HEIGHT,floor_sprite);
+    draw_sprite     (g, x * TILE_WIDTH,y * TILE_HEIGHT,sprites[TILE_FLOOR]);
     draw_shadow     (g, x, y);
 }
 
 void render_door(struct GameData* g, int x, int y) // used to draw an open door
 {
-    draw_sprite     (g, x * TILE_WIDTH,y * TILE_HEIGHT,floor_sprite);
+    draw_sprite     (g, x * TILE_WIDTH,y * TILE_HEIGHT,sprites[TILE_FLOOR]);
     draw_shadow     (g, x, y);
-    draw_sprite_tr  (g, x * TILE_WIDTH,y * TILE_HEIGHT,door_o_sprite);
+    draw_sprite_tr  (g, x * TILE_WIDTH,y * TILE_HEIGHT,sprites[TILE_DOOR_O]);
 }
 
 void render_mine(struct GameData* g, int x, int y) // used to draw mines, duh
 {
-    if (TILE_AT(x-1, y) != TILE_WALL)
-    {
-        draw_sprite     (g, x * TILE_WIDTH,y * TILE_HEIGHT,floor_sprite);
-        draw_shadow     (g, x, y);
-        draw_sprite_tr  (g, x * TILE_WIDTH,y * TILE_HEIGHT,mine_sprite);
-    }
-    else if (TILE_AT(x-1, y) == TILE_WALL)
-    {
-        draw_sprite     (g, x * TILE_WIDTH,y * TILE_HEIGHT,floor_sprite);
-        draw_shadow     (g, x, y);
-        draw_sprite_tr  (g, x * TILE_WIDTH,y * TILE_HEIGHT,shad_mine);
-    }
+    draw_sprite (g, x * TILE_WIDTH,y * TILE_HEIGHT,sprites[ITEM_MINE]);
+    draw_shadow (g, x, y);
 }
 
 void typewriter(int x, int y, char* string, uint8_t color)
@@ -318,58 +389,16 @@ void render_maze(struct GameData* g)
     {
         while (x < g->level_width)
         {
-            if (g->tile_data[counter] == TILE_WALL)
-                draw_sprite     (g, x * TILE_WIDTH,y * TILE_HEIGHT,brick_wall);
-            else if (g->tile_data[counter] == TILE_FLOOR)
-            {
-                draw_sprite     (g, x * TILE_WIDTH,y * TILE_HEIGHT,floor_sprite);
-                draw_shadow     (g, x, y);
-            }
-            else if (g->tile_data[counter] == ITEM_MINE && TILE_AT(x-1, y) != TILE_WALL)
-            {
-                draw_sprite     (g, x * TILE_WIDTH,y * TILE_HEIGHT,floor_sprite);
-                draw_shadow     (g, x, y);
-                draw_sprite_tr  (g, x * TILE_WIDTH,y * TILE_HEIGHT,mine_sprite);
-            }
-            else if (g->tile_data[counter] == ITEM_MINE && TILE_AT(x-1, y) == TILE_WALL)
-            {
-                draw_sprite     (g, x * TILE_WIDTH,y * TILE_HEIGHT,floor_sprite);
-                draw_shadow     (g, x, y);
-                draw_sprite_tr  (g, x * TILE_WIDTH,y * TILE_HEIGHT,shad_mine);
-            }
-            else if (g->tile_data[counter] == ITEM_KEY && TILE_AT(x-1, y) != TILE_WALL)
-            {
-                draw_sprite     (g, x * TILE_WIDTH,y * TILE_HEIGHT,floor_sprite);
-                draw_shadow     (g, x, y);
-                draw_sprite_tr  (g, x * TILE_WIDTH,y * TILE_HEIGHT,key_sprite);
-            }
-            else if (g->tile_data[counter] == ITEM_KEY && TILE_AT(x-1, y) == TILE_WALL)
-            {
-                draw_sprite     (g, x * TILE_WIDTH,y * TILE_HEIGHT,floor_sprite);
-                draw_shadow     (g, x, y);
-                draw_sprite_tr  (g, x * TILE_WIDTH,y * TILE_HEIGHT,shad_key);
-            }
-            else if (g->tile_data[counter] == TILE_DOOR_C)
-            {
-                draw_sprite     (g, x * TILE_WIDTH,y * TILE_HEIGHT,floor_sprite);
-                draw_shadow     (g, x, y);
-                draw_sprite_tr  (g, x * TILE_WIDTH,y * TILE_HEIGHT,door_c_sprite);
-            }
-            else if (g->tile_data[counter] == TILE_DOOR_O)
-            {
-                render_door (g, x, y);
-            }
-            else if (g->tile_data[counter] == TILE_EXIT)
-                draw_sprite     (g, x * TILE_WIDTH,y * TILE_HEIGHT,exit_sprite);
-                
-            counter = counter++;
-            x = x++;
+            draw_sprite(g, x * TILE_WIDTH, y * TILE_HEIGHT, gfx_table[g->tile_data[counter]]);
+            draw_shadow(g, x, y);
+            counter++;
+            x++;
         }
-        y = y++;
-        x = 0;
-
-        render_stats(g);
+    y++;
+    x = 0;
     }
+
+    render_stats(g);
 }
 
 void render_actors(struct GameData* g)
@@ -383,12 +412,12 @@ void render_actors(struct GameData* g)
         
         switch (g->Actors[i].type)
         {
-            case ACTOR_PLAYER:  sprite = player_sprite; break;
-            case ACTOR_GUARD:   sprite = guard_sprite;  break;
-            default:            sprite = error_sprite;  break;
+            case ACTOR_PLAYER:  sprite = sprites[ENT_PLAYER]; break;
+            case ACTOR_GUARD:   sprite = sprites[ENT_GUARD];  break;
+            default:            sprite = sprites[ENT_ERROR];  break;
         }
         
-        if (sprite == error_sprite)
+        if (sprite == sprites[ENT_ERROR])
         {
             i++;
             continue;
@@ -401,11 +430,11 @@ void render_actors(struct GameData* g)
         // if actor has changed position, render an empty floor tile in the old location, unless it's a door frame or mine         
         if (g->Actors[i].x != g->Actors[i].old_x || g->Actors[i].y != g->Actors[i].old_y)
         {
-            if (TILE_AT(g->Actors[i].old_x, g->Actors[i].old_y) == TILE_FLOOR)
+            if (TILE_AT(g->Actors[i].old_x, g->Actors[i].old_y) == '-')
                 render_floor(g, g->Actors[i].old_x, g->Actors[i].old_y);
-            else if (TILE_AT(g->Actors[i].old_x, g->Actors[i].old_y) == TILE_DOOR_O)
+            else if (TILE_AT(g->Actors[i].old_x, g->Actors[i].old_y) == '_')
                 render_door(g, g->Actors[i].old_x, g->Actors[i].old_y);
-            else if (TILE_AT(g->Actors[i].old_x, g->Actors[i].old_y) == ITEM_MINE)
+            else if (TILE_AT(g->Actors[i].old_x, g->Actors[i].old_y) == '^')
                 render_mine(g, g->Actors[i].old_x, g->Actors[i].old_y);
         }
                      
@@ -418,13 +447,13 @@ void render_actors(struct GameData* g)
         
         switch (g->Actors[i].type)
         {
-            case ACTOR_GRAVE:   sprite = grave_sprite;  break;
-            case ACTOR_EXPLO:   sprite = expl_sprite;   break;
-            case ACTOR_EMPTY:   sprite = grave_sprite;  break;
-            default:            sprite = error_sprite;  break;
+            case ACTOR_GRAVE:   sprite = sprites[ENT_GRAVE];  break;
+            case ACTOR_EXPLO:   sprite = sprites[ENT_EXPLO];  break;
+            case ACTOR_EMPTY:   sprite = sprites[ENT_GRAVE];  break;
+            default:            sprite = sprites[ENT_ERROR];  break;
         }
         
-        if (sprite == error_sprite)
+        if (sprite == sprites[ENT_ERROR])
         {
             i++;
             continue;
