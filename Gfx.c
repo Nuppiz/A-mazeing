@@ -8,6 +8,7 @@ uint8_t far screen_buf [64000]; // double buffer
 union REGS regs;
 
 extern struct GameData g;
+extern uint16_t notes;
 
 // reserve memory for sprites
 uint8_t far splash_screen [64000];
@@ -19,7 +20,7 @@ uint8_t* gfx_table[256];
 
 void set_tile_gfx()
 {
-    _fmemset(gfx_table, ENT_ERROR, 256);
+    _fmemset(gfx_table, SPR_ERROR, 256);
     gfx_table['W'] = sprites[TILE_WALL];
     gfx_table['-'] = sprites[TILE_FLOOR];
     gfx_table['e'] = sprites[TILE_EXIT];
@@ -66,11 +67,11 @@ void load_tiles()
     load_sprite(TILE_EXIT, "GFX/EXIT.7UP");
     load_sprite(ITEM_KEY, "GFX/KEY.7UP");
     load_sprite(ITEM_MINE, "GFX/MINE.7UP");
-    load_sprite(ENT_PLAYER, "GFX/PLAYER.7UP");
-    load_sprite(ENT_GUARD, "GFX/GUARD.7UP");
-    load_sprite(ENT_EXPLO, "GFX/EXPLO.7UP");
-    load_sprite(ENT_GRAVE, "GFX/GRAVE.7UP");
-    load_sprite(ENT_ERROR, "GFX/ERROR.7UP");
+    load_sprite(SPR_PLAYER, "GFX/PLAYER.7UP");
+    load_sprite(SPR_GUARD, "GFX/GUARD.7UP");
+    load_sprite(SPR_EXPLO, "GFX/EXPLO.7UP");
+    load_sprite(SPR_GRAVE, "GFX/GRAVE.7UP");
+    load_sprite(SPR_ERROR, "GFX/ERROR.7UP");
     load_sprite(SHAD_IN_COR, "GFX/SHAD_IC.7UP");
     load_sprite(SHAD_HORZ, "GFX/SHAD_H.7UP");
     load_sprite(SHAD_VERT, "GFX/SHAD_V.7UP");
@@ -205,14 +206,12 @@ void draw_rectangle(int x, int y, int w, int h, uint8_t color)
 {
     int index_x = 0;
     int index_y = 0;
-    int i = 0;
 
     for (index_y=0; index_y<h;index_y++)
     {
         for (index_x=0; index_x<w;index_x++)
         {
             screen_buf[y*SCREEN_WIDTH+x]=color;
-            i++;
             x++;
         }
         index_x = 0;
@@ -222,54 +221,159 @@ void draw_rectangle(int x, int y, int w, int h, uint8_t color)
     index_y = 0;
 }
 
+void draw_circle()
+{
+    int radius = 50;
+    int degree = 0;
+    double degs = 0;
+    int center_x = 55;
+    int center_y = 100;
+    int offset_x = 0;
+    int offset_y = 0;
+
+    while (degree < 360)
+    {
+        degs = degToRad(degree);
+        offset_y = sin(degs) * radius;
+        offset_x = cos(degs) * radius;
+        screen_buf[(center_y + offset_y) * SCREEN_WIDTH + (center_x + offset_x)]=14;
+        degree++;
+    }
+}
+
+void disco_ball()
+{
+    uint8_t color = 1;
+    int b_radius = 50;
+    int b_degree = 0;
+    double b_degs = 0;
+    int b_center_x = 265;
+    int b_center_y = 100;
+    int b_offset_x = 0;
+    int b_offset_y = 0;
+    int limit_x = 0;
+    int limit_y = 0;
+
+    while (b_degree < 360)
+    {
+        b_degs = degToRad(b_degree);
+        limit_y = sin(b_degs) * b_radius;
+        limit_x = cos(b_degs) * b_radius;
+        if (limit_y >= 0 && limit_x >= 0)
+        {
+            while (b_offset_y < limit_y)
+            {
+                while(b_offset_x < limit_x)
+                {
+                    screen_buf[(b_center_y + b_offset_y) * SCREEN_WIDTH + (b_center_x + b_offset_x)] = color + TICKS*2;
+                    b_offset_x++;
+                    color++;
+                }
+                b_offset_x = 0;
+                b_offset_y++;
+            }
+            b_offset_y = 0;
+            b_degree++;
+        }
+        else if (limit_y < 0 && limit_x < 0)
+        {
+            while (b_offset_y > limit_y)
+            {
+                while(b_offset_x > limit_x)
+                {
+                    screen_buf[(b_center_y + b_offset_y) * SCREEN_WIDTH + (b_center_x + b_offset_x)] = color + TICKS*2;
+                    b_offset_x--;
+                    color++;
+                }
+                b_offset_x = 0;
+                b_offset_y--;
+            }
+            b_offset_y = 0;
+            b_degree++;
+        }
+        else if (limit_y < 0 && limit_x >= 0)
+        {
+            while (b_offset_x < limit_x)
+            {
+                while(b_offset_y > limit_y)
+                {
+                    screen_buf[(b_center_y + b_offset_y) * SCREEN_WIDTH + (b_center_x + b_offset_x)] = color + TICKS*2;
+                    b_offset_y--;
+                    color++;
+                }
+                b_offset_y = 0;
+                b_offset_x++;
+            }
+            b_offset_x = 0;
+            b_degree++;
+        }
+        else if (limit_y >= 0 && limit_x < 0)
+        {
+            while (b_offset_x > limit_x)
+            {
+                while(b_offset_y < limit_y)
+                {
+                    screen_buf[(b_center_y + b_offset_y) * SCREEN_WIDTH + (b_center_x + b_offset_x)] = color + TICKS*2;
+                    b_offset_y++;
+                    color++;
+                }
+                b_offset_y = 0;
+                b_offset_x--;
+            }
+            b_offset_x = 0;
+            b_degree++;
+        }
+    }
+}
+
 void draw_shadow(struct GameData* g, int x, int y)
 {    
     int pixel_x = x*TILE_WIDTH;
     int pixel_y = y*TILE_HEIGHT;
 
-    if (TILE_AT(x, y) == '-')
+    if (TILE_AT(x, y) == MAP_FLOOR)
     {
-        if (TILE_AT(x-1, y-1) == 'W' &&
-            TILE_AT(x,   y-1) == 'W' &&
-            TILE_AT(x-1, y  ) == 'W')
+        if (TILE_AT(x-1, y-1) == MAP_WALL &&
+            TILE_AT(x,   y-1) == MAP_WALL &&
+            TILE_AT(x-1, y  ) == MAP_WALL)
             draw_sprite_tr(g, pixel_x, pixel_y, sprites[SHAD_IN_COR]);
             
-        else if (TILE_AT(x, y-1) == 'W')
+        else if (TILE_AT(x, y-1) == MAP_WALL)
             draw_sprite_tr(g, pixel_x, pixel_y, sprites[SHAD_HORZ]);
         
-        else if (TILE_AT(x-1, y) == 'W')
+        else if (TILE_AT(x-1, y) == MAP_WALL)
             draw_sprite_tr(g, pixel_x, pixel_y, sprites[SHAD_VERT]);
         
-        else if (TILE_AT(x-1, y-1) == 'W')
+        else if (TILE_AT(x-1, y-1) == MAP_WALL)
             draw_sprite_tr(g, pixel_x, pixel_y, sprites[SHAD_OUT_COR]);
     }
 
-    else if (TILE_AT(x, y) == '^')
+    else if (TILE_AT(x, y) == MAP_MINE)
     {
-        if (TILE_AT(x-1, y) == 'W' && TILE_AT(x, y-1) == 'W')
+        if (TILE_AT(x-1, y) == MAP_WALL && TILE_AT(x, y-1) == MAP_WALL)
         {
             draw_sprite_tr (g, pixel_x, pixel_y, sprites[SHAD_MINE]);
             draw_sprite_tr(g, pixel_x, pixel_y, sprites[SHAD_HORZ]);
         }
-        else if  (TILE_AT(x-1, y) == 'W')
+        else if  (TILE_AT(x-1, y) == MAP_WALL)
             draw_sprite_tr (g, pixel_x, pixel_y, sprites[SHAD_MINE]);
 
-        else if (TILE_AT(x, y-1) == 'W')
+        else if (TILE_AT(x, y-1) == MAP_WALL)
             draw_sprite_tr(g, pixel_x, pixel_y, sprites[SHAD_HORZ]);
     }
 
-    else if (TILE_AT(x, y) == '*')
+    else if (TILE_AT(x, y) == MAP_KEY)
     {
 
-        if (TILE_AT(x-1, y) == 'W' && TILE_AT(x, y-1) == 'W')
+        if (TILE_AT(x-1, y) == MAP_WALL && TILE_AT(x, y-1) == MAP_WALL)
         {
             draw_sprite_tr (g, pixel_x, pixel_y, sprites[SHAD_KEY]);
             draw_sprite_tr(g, pixel_x, pixel_y, sprites[SHAD_HORZ]);
         }
-        else if  (TILE_AT(x-1, y) == 'W')
+        else if  (TILE_AT(x-1, y) == MAP_WALL)
             draw_sprite_tr (g, pixel_x, pixel_y, sprites[SHAD_KEY]);
 
-        else if (TILE_AT(x, y-1) == 'W')
+        else if (TILE_AT(x, y-1) == MAP_WALL)
             draw_sprite_tr(g, pixel_x, pixel_y, sprites[SHAD_HORZ]);
     }
 }
@@ -412,12 +516,12 @@ void render_actors(struct GameData* g)
         
         switch (g->Actors[i].type)
         {
-            case ACTOR_PLAYER:  sprite = sprites[ENT_PLAYER]; break;
-            case ACTOR_GUARD:   sprite = sprites[ENT_GUARD];  break;
-            default:            sprite = sprites[ENT_ERROR];  break;
+            case ACTOR_PLAYER:  sprite = sprites[SPR_PLAYER]; break;
+            case ACTOR_GUARD:   sprite = sprites[SPR_GUARD];  break;
+            default:            sprite = sprites[SPR_ERROR];  break;
         }
         
-        if (sprite == sprites[ENT_ERROR])
+        if (sprite == sprites[SPR_ERROR])
         {
             i++;
             continue;
@@ -430,11 +534,11 @@ void render_actors(struct GameData* g)
         // if actor has changed position, render an empty floor tile in the old location, unless it's a door frame or mine         
         if (g->Actors[i].x != g->Actors[i].old_x || g->Actors[i].y != g->Actors[i].old_y)
         {
-            if (TILE_AT(g->Actors[i].old_x, g->Actors[i].old_y) == '-')
+            if (TILE_AT(g->Actors[i].old_x, g->Actors[i].old_y) == MAP_FLOOR)
                 render_floor(g, g->Actors[i].old_x, g->Actors[i].old_y);
-            else if (TILE_AT(g->Actors[i].old_x, g->Actors[i].old_y) == '_')
+            else if (TILE_AT(g->Actors[i].old_x, g->Actors[i].old_y) == MAP_DOOR_O)
                 render_door(g, g->Actors[i].old_x, g->Actors[i].old_y);
-            else if (TILE_AT(g->Actors[i].old_x, g->Actors[i].old_y) == '^')
+            else if (TILE_AT(g->Actors[i].old_x, g->Actors[i].old_y) == MAP_MINE)
                 render_mine(g, g->Actors[i].old_x, g->Actors[i].old_y);
         }
                      
@@ -447,13 +551,13 @@ void render_actors(struct GameData* g)
         
         switch (g->Actors[i].type)
         {
-            case ACTOR_GRAVE:   sprite = sprites[ENT_GRAVE];  break;
-            case ACTOR_EXPLO:   sprite = sprites[ENT_EXPLO];  break;
-            case ACTOR_EMPTY:   sprite = sprites[ENT_GRAVE];  break;
-            default:            sprite = sprites[ENT_ERROR];  break;
+            case ACTOR_GRAVE:   sprite = sprites[SPR_GRAVE];  break;
+            case ACTOR_EXPLO:   sprite = sprites[SPR_EXPLO];  break;
+            case ACTOR_EMPTY:   sprite = sprites[SPR_GRAVE];  break;
+            default:            sprite = sprites[SPR_ERROR];  break;
         }
         
-        if (sprite == sprites[ENT_ERROR])
+        if (sprite == sprites[SPR_ERROR])
         {
             i++;
             continue;
@@ -518,6 +622,8 @@ void render(struct GameData* g)
         g->game_state == GAME_WIN)
     {
         render_actors(g);
+        //draw_circle();
+        //disco_ball();
     }
     // if menu ...
     else if (g->game_state == GAME_MENU)

@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <dos.h>
+#include <math.h>
 
 #define VGA_256_COLOR_MODE  0x13      /* use to set 256-color mode. */
 #define TEXT_MODE           0x03      /* use to set 80x25 text mode. */
@@ -31,13 +32,13 @@
 
 #define LAST_LEVEL          3
 
-/*#define TILE_WALL           87
-#define TILE_FLOOR          45
-#define TILE_DOOR_C         124
-#define TILE_DOOR_O         250
-#define TILE_EXIT           101
-#define ITEM_KEY            42
-#define ITEM_MINE           94*/
+#define MAP_WALL           87
+#define MAP_FLOOR          45
+#define MAP_DOOR_C         124
+#define MAP_DOOR_O         250
+#define MAP_EXIT           101
+#define MAP_KEY            42
+#define MAP_MINE           94
 
 #define TICKS               (*(volatile unsigned long far *)(0x0040006CL))
 
@@ -82,11 +83,11 @@ enum SPRITES
     TILE_EXIT,
     ITEM_KEY,
     ITEM_MINE,
-    ENT_PLAYER,
-    ENT_GUARD,
-    ENT_EXPLO,
-    ENT_GRAVE,
-    ENT_ERROR,
+    SPR_PLAYER,
+    SPR_GUARD,
+    SPR_EXPLO,
+    SPR_GRAVE,
+    SPR_ERROR,
     SHAD_IN_COR,
     SHAD_HORZ,
     SHAD_VERT,

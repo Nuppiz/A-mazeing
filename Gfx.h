@@ -12,6 +12,9 @@
 #define TILE_AREA           TILE_WIDTH*TILE_HEIGHT
 #define CHARACTER_SIZE      72
 
+#define M_PI                3.14159265358979323846264338327950288
+#define degToRad(degree)    (degree * (M_PI / 180.0))
+
 void set_tile_gfx();
 void set_mode();
 void fill_screen();
@@ -25,6 +28,8 @@ void draw_sprite();
 void draw_temp();
 void draw_sprite_tr();
 void draw_big();
+void draw_rectangle();
+void draw_circle();
 void draw_shadow();
 void draw_text();
 void render_text();
