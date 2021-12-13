@@ -113,7 +113,7 @@ void draw_sprite(struct GameData* g, int x, int y, uint8_t* sprite)
     {
         for (index_x=0;index_x<TILE_WIDTH;index_x++)
         {
-            screen_buf[y*SCREEN_WIDTH+x]=sprite[i];
+            SET_PIXEL(x, y, sprite[i]);
             i++;
             x++;
         }
@@ -164,7 +164,7 @@ void draw_sprite_tr(struct GameData* g, int x, int y, uint8_t* sprite)
         {
             if (sprite[i] != 13)
             {
-                screen_buf[y*SCREEN_WIDTH+x]=sprite[i];
+                SET_PIXEL(x, y, sprite[i]);
                 i++;
                 x++;
             }
@@ -191,7 +191,7 @@ void draw_big(int x, int y, int w, int h, uint8_t* sprite)
     {
         for (index_x=0; index_x<w;index_x++)
         {
-            screen_buf[y*SCREEN_WIDTH+x]=sprite[i];
+            SET_PIXEL(x, y, sprite[i]);
             i++;
             x++;
         }
@@ -211,7 +211,7 @@ void draw_rectangle(int x, int y, int w, int h, uint8_t color)
     {
         for (index_x=0; index_x<w;index_x++)
         {
-            screen_buf[y*SCREEN_WIDTH+x]=color;
+            SET_PIXEL(x, y, color);
             x++;
         }
         index_x = 0;
@@ -219,111 +219,6 @@ void draw_rectangle(int x, int y, int w, int h, uint8_t color)
         y++;
     }
     index_y = 0;
-}
-
-void draw_circle()
-{
-    int radius = 50;
-    int degree = 0;
-    double degs = 0;
-    int center_x = 55;
-    int center_y = 100;
-    int offset_x = 0;
-    int offset_y = 0;
-
-    while (degree < 360)
-    {
-        degs = degToRad(degree);
-        offset_y = sin(degs) * radius;
-        offset_x = cos(degs) * radius;
-        screen_buf[(center_y + offset_y) * SCREEN_WIDTH + (center_x + offset_x)]=14;
-        degree++;
-    }
-}
-
-void disco_ball()
-{
-    uint8_t color = 1;
-    int b_radius = 50;
-    int b_degree = 0;
-    double b_degs = 0;
-    int b_center_x = 265;
-    int b_center_y = 100;
-    int b_offset_x = 0;
-    int b_offset_y = 0;
-    int limit_x = 0;
-    int limit_y = 0;
-
-    while (b_degree < 360)
-    {
-        b_degs = degToRad(b_degree);
-        limit_y = sin(b_degs) * b_radius;
-        limit_x = cos(b_degs) * b_radius;
-        if (limit_y >= 0 && limit_x >= 0)
-        {
-            while (b_offset_y < limit_y)
-            {
-                while(b_offset_x < limit_x)
-                {
-                    screen_buf[(b_center_y + b_offset_y) * SCREEN_WIDTH + (b_center_x + b_offset_x)] = color + TICKS*2;
-                    b_offset_x++;
-                    color++;
-                }
-                b_offset_x = 0;
-                b_offset_y++;
-            }
-            b_offset_y = 0;
-            b_degree++;
-        }
-        else if (limit_y < 0 && limit_x < 0)
-        {
-            while (b_offset_y > limit_y)
-            {
-                while(b_offset_x > limit_x)
-                {
-                    screen_buf[(b_center_y + b_offset_y) * SCREEN_WIDTH + (b_center_x + b_offset_x)] = color + TICKS*2;
-                    b_offset_x--;
-                    color++;
-                }
-                b_offset_x = 0;
-                b_offset_y--;
-            }
-            b_offset_y = 0;
-            b_degree++;
-        }
-        else if (limit_y < 0 && limit_x >= 0)
-        {
-            while (b_offset_x < limit_x)
-            {
-                while(b_offset_y > limit_y)
-                {
-                    screen_buf[(b_center_y + b_offset_y) * SCREEN_WIDTH + (b_center_x + b_offset_x)] = color + TICKS*2;
-                    b_offset_y--;
-                    color++;
-                }
-                b_offset_y = 0;
-                b_offset_x++;
-            }
-            b_offset_x = 0;
-            b_degree++;
-        }
-        else if (limit_y >= 0 && limit_x < 0)
-        {
-            while (b_offset_x > limit_x)
-            {
-                while(b_offset_y < limit_y)
-                {
-                    screen_buf[(b_center_y + b_offset_y) * SCREEN_WIDTH + (b_center_x + b_offset_x)] = color + TICKS*2;
-                    b_offset_y++;
-                    color++;
-                }
-                b_offset_y = 0;
-                b_offset_x--;
-            }
-            b_offset_x = 0;
-            b_degree++;
-        }
-    }
 }
 
 void draw_shadow(struct GameData* g, int x, int y)
@@ -390,7 +285,7 @@ void draw_text(int x, int y, int i, uint8_t color)
         {
             if (alphabet[i] != 13)
             {
-                screen_buf[y*SCREEN_WIDTH+x]=alphabet[i] + color;
+                SET_PIXEL(x, y, alphabet[i] + color);
                 i++;
                 x++;
             }
