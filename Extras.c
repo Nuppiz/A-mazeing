@@ -4,6 +4,12 @@
 #define M_PI                3.14159265358979323846264338327950288
 #define degToRad(degree)    (degree * (M_PI / 180.0))
 
+void set_cursor(int x, int y)
+{
+    // Escape code to set the cursor position
+    printf("%c[%d;%df", 0x1B, y+1, x+1);
+}
+
 void draw_circle()
 {
     int radius = 50;

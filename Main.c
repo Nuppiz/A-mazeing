@@ -5,12 +5,6 @@
 #include "LvlLoad.h"
 #include "Sounds.h"
 
-void set_cursor(int x, int y)
-{
-    // Escape code to set the cursor position
-    printf("%c[%d;%df", 0x1B, y+1, x+1);
-}
-
 void start_game(struct GameData* g)
 {
     start_screen();
@@ -25,13 +19,20 @@ void start_game(struct GameData* g)
     level_loader(g);
 }
 
-void init_gamedata(struct GameData* g)
+void init_gamedata(struct GameData* g, struct Cursor* cursor)
 {
     /* init game data */
     memset(g, 0, sizeof(struct GameData));
+
+    /* init cursor data */
+    cursor->old_x = 115;
+    cursor->new_x = 115;
+    cursor->old_y = 65;
+    cursor->new_y = 65;
+    cursor->selection = 0;
 }
 
-void init(struct GameData* g)
+void init(struct GameData* g, struct Cursor* cursor)
 {       
     /* init gfx */
     set_mode(VGA_256_COLOR_MODE);
@@ -41,9 +42,9 @@ void init(struct GameData* g)
     create_composites();
 
     /* init gamedata */
-    init_gamedata(g);
+    init_gamedata(g, cursor);
     g->game_running = 1;
-    g->game_state = GAME_MENU;
+    g->game_state = GAME_M_MAIN;
     
     /* init keyboard */
     init_keyboard();
@@ -59,16 +60,19 @@ void main()
 {
     /* local variables all inside GameData struct called g */
     struct GameData g;
+
+    /* cursor location inside a struct so it can easily be accessed everywhere */
+    struct Cursor cursor;
     
     /* initialize everything */
-    init(&g);
+    init(&g, &cursor);
 
     /* run game, get keyboard state first */
     while (g.game_running == 1)
     {
-        process_input(&g);
+        process_input(&g, &cursor);
         game_logic(&g);
-        render(&g);
+        render(&g, &cursor);
         if (g.music_enabled == 1)
         {
             play_song();

@@ -200,7 +200,7 @@ void check_state(struct GameData* g)
         gameover_screen();
         sound_gameover();
         delay(1000);
-        g->game_state = GAME_MENU;
+        g->game_state = GAME_M_MAIN;
     }
     else if (g->game_state == GAME_WIN)
     {
@@ -216,7 +216,7 @@ void check_state(struct GameData* g)
     {
         end_song();
         delay(100);
-        g->game_state = GAME_MENU;
+        g->game_state = GAME_M_MAIN;
     }
 }
 

@@ -37,6 +37,7 @@ void render_maze();
 void render_actors();
 void render_menu();
 void render_end();
+void render_cursor();
 void start_screen();
 void gameover_screen();
 void debug_screen_e();

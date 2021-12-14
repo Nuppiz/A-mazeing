@@ -11,7 +11,7 @@ extern struct GameData g;
 extern uint16_t notes;
 
 // reserve memory for sprites
-uint8_t far splash_screen [64000];
+uint8_t far menu_bground [64000];
 uint8_t alphabet [4240];
 uint8_t sprites[NUM_SPRITES][TILE_AREA];
 uint8_t temp_tile [64];
@@ -82,7 +82,7 @@ void load_tiles()
 
 void load_special_gfx()
 {
-    load_gfx("GFX/SPLASH.7UP", splash_screen, 64000);
+    load_gfx("GFX/SPLASH.7UP", menu_bground, 64000);
     load_gfx("GFX/FONT.7UP", alphabet, 4240);
 }
 
@@ -467,13 +467,19 @@ void render_actors(struct GameData* g)
 
 void render_menu()
 {
-    draw_big(0, 0, 320, 200, splash_screen); // change to menu gfx or text later
+    draw_big(0, 0, 320, 200, menu_bground); // change to menu gfx or text later
 }
 
 void render_end()
 {
     fill_screen(0);
     render_text(122, 96, "YOU WIN!", 14);
+}
+
+void render_cursor(int old_x, int old_y, int new_x, int new_y)
+{
+    render_text(old_x, old_y, " ", 15);
+    render_text(new_x, new_y, ">", 15);
 }
 
 void start_screen()
@@ -508,7 +514,7 @@ void debug_screen_d()
     draw_rectangle(61, 19, 198, 10, 0);
 }
 
-void render(struct GameData* g)
+void render(struct GameData* g, struct Cursor* cursor)
 {        
     // in case playing, just died, or exited
     // draw play field and objects
@@ -520,11 +526,17 @@ void render(struct GameData* g)
         //draw_circle();
         //disco_ball();
     }
-    // if menu ...
-    else if (g->game_state == GAME_MENU)
+    // if main menu ...
+    else if (g->game_state == GAME_M_MAIN)
     {
         render_menu();
-        render_text(200, 1, "VER. 0.0010A", 0);
+        render_cursor(cursor->old_x, cursor->old_y, cursor->new_x, cursor->new_y);
+        render_text(125, 65, "START", 15);
+        render_text(125, 80, "OPTIONS", 15);
+        render_text(125, 95, "HELP!", 15);
+        render_text(125, 110, "STORY", 15);
+        render_text(125, 125, "QUIT", 15);
+        render_text(200, 185, "VER. 0.0015A", 0);
     }
     // if end ...
     else if (g->game_state == GAME_END)

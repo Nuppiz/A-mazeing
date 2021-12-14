@@ -75,20 +75,61 @@ void deinit_keyboard()
     g_Input = NULL;
 }
 
-void control_menu(struct GameData* g)
+void cursor_up(struct Cursor* cursor, uint8_t max_choices)
 {
+    if (cursor->selection == 0) // if already at the top selection...
+    {
+        cursor->new_y = cursor->old_y + max_choices * 15; // move cursor to bottom selection
+        cursor->selection = max_choices;
+    }
+    else
+    {
+        cursor->new_y = cursor->new_y - 15;
+        cursor->selection--;
+    }
+}
+
+void cursor_down(struct Cursor* cursor, uint8_t max_choices)
+{
+    if (cursor->selection == max_choices) // if already at the bottom selection...
+    {
+        cursor->new_y = cursor->new_y - max_choices * 15; // move cursor to top selection
+        cursor->selection = 0;
+    }
+    else
+    {
+        cursor->new_y = cursor->new_y + 15;
+        cursor->selection++;
+    }
+}
+
+void control_menu(struct GameData* g, struct Cursor* cursor)
+{
+    uint8_t max_choices = 0;
+
+    if (g->game_state == GAME_M_MAIN)
+        max_choices = 4;
+
     if (KEY_WAS_HIT(KEY_SPACE))
         start_game(g);
     else if (KEY_WAS_HIT(KEY_M) && g->music_enabled == 1)
         g->music_enabled = 0;
     else if (KEY_WAS_HIT(KEY_M) && g->music_enabled == 0)
         g->music_enabled = 1;
+    else if (KEY_WAS_HIT(KEY_UP))
+    {
+        cursor_up(cursor, max_choices);
+    }
+    else if (KEY_WAS_HIT(KEY_DOWN))
+    {
+        cursor_down(cursor, max_choices);
+    }
 }
 
 void control_end(struct GameData* g)
 {
     if (KEY_WAS_HIT(KEY_SPACE))
-        g->game_state = GAME_MENU;
+        g->game_state = GAME_M_MAIN;
 }
 
 void control_ingame(struct GameData* g)
@@ -198,12 +239,12 @@ void clear_keys()
         g_Input->kb_array[i] &= KEY_PRESSED_FLAG;
 }
 
-void process_input(struct GameData* g)
+void process_input(struct GameData* g, struct Cursor* cursor)
 {
     get_keyboard();
     
-    if (g->game_state == GAME_MENU)
-        control_menu(g);
+    if (g->game_state == GAME_M_MAIN)
+        control_menu(g, cursor);
     else if (g->game_state == GAME_END)
         control_end(g);
     else if (g->game_state == GAME_INGAME)

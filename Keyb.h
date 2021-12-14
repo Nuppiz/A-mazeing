@@ -33,6 +33,8 @@ void interrupt far keyhandler();
 void init_keyboard();
 int initInput();
 void deinit_keyboard();
+void cursor_uo();
+void cursor_down();
 void control_menu();
 void control_end();
 void control_ingame();

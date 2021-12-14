@@ -13,11 +13,15 @@
 #define TILE_WIDTH          8
 #define TILE_HEIGHT         8
 
-#define GAME_MENU           0
-#define GAME_INGAME         1
-#define GAME_OVER           2
-#define GAME_WIN            3
-#define GAME_END            4
+#define GAME_M_MAIN         0
+#define GAME_M_OPT          1
+#define GAME_M_HLP          2
+#define GAME_M_STOR         3
+#define GAME_M_KCON         4
+#define GAME_INGAME         5
+#define GAME_OVER           6
+#define GAME_WIN            7
+#define GAME_END            8
 
 #define MAX_ACTORS          10
 #define LEVEL_SIZE          level_width * level_height
@@ -72,6 +76,15 @@ struct GameData
     int actor_count;
 
     struct Actor Actors[MAX_ACTORS];
+};
+
+struct Cursor
+{
+    int old_x;
+    int old_y;
+    int new_x;
+    int new_y;
+    int8_t selection;
 };
 
 enum SPRITES
