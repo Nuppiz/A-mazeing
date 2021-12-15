@@ -8,6 +8,8 @@ uint8_t far screen_buf [64000]; // double buffer
 union REGS regs;
 
 extern struct GameData g;
+extern struct Cursor cursor;
+extern struct Options opt;
 extern uint16_t notes;
 
 // reserve memory for sprites
@@ -336,7 +338,7 @@ void render_mine(struct GameData* g, int x, int y) // used to draw mines, duh
     draw_shadow (g, x, y);
 }
 
-void typewriter(int x, int y, char* string, uint8_t color)
+void typewriter(struct Options* opt, int x, int y, char* string, uint8_t color)
 {
     int i = 0;
     char c;
@@ -347,7 +349,8 @@ void typewriter(int x, int y, char* string, uint8_t color)
         draw_text(x, y, c - 32, color);
         x = x + 10;
         i++;
-        sound_typing();
+        if (opt->sfx_on == 1)
+            sound_typing();
         memcpy(VGA,screen_buf,SCREEN_SIZE);
         delay(100);
     }
@@ -465,9 +468,54 @@ void render_actors(struct GameData* g)
     }
 }
 
-void render_menu()
+void change_menubg(struct Options* opt)
 {
-    draw_big(0, 0, 320, 200, menu_bground); // change to menu gfx or text later
+    char* filename;
+
+    if (opt->menu_status == MENU_MAIN)
+        filename = "SPLASH.7UP";
+    else if (opt->menu_status == MENU_OPTIONS)
+        filename = "OPTIONS.7UP";
+
+    printf("%s", filename);
+    delay(1000);
+
+    fill_screen(0);
+    load_gfx(filename, menu_bground, 64000);
+}
+
+void render_menu(struct Cursor* cursor, struct Options* opt)
+{
+    draw_big(0, 0, 320, 200, menu_bground);
+
+    if (opt->menu_status == MENU_MAIN)
+    {
+        cursor->new_x = 115;
+        render_text(125, 65, "START", 15);
+        render_text(125, 80, "OPTIONS", 15);
+        render_text(125, 95, "HELP!", 15);
+        render_text(125, 110, "STORY", 15);
+        render_text(125, 125, "QUIT", 15);
+    }
+
+    else if(opt->menu_status == MENU_OPTIONS)
+    {
+        cursor->new_x = 101;
+        render_text(111, 65, "SOUNDS", 15);
+        if (opt->sfx_on == 1)
+            render_text(191, 65, "ON", 15);
+        else if (opt->sfx_on == 0)
+            render_text(191, 65, "OFF", 15);
+        render_text(111, 105, "MUSIC", 15);
+        if (opt->music_on == 1)
+            render_text(191, 105, "ON", 15);
+        else if (opt->music_on == 0)
+            render_text(191, 105, "OFF", 15);
+        render_text(111, 145, "KEY CONFIG", 15);
+    }
+
+    render_cursor(cursor->old_x, cursor->old_y, cursor->new_x, cursor->new_y);
+    render_text(200, 185, "VER. 0.0015A", 0);
 }
 
 void render_end()
@@ -482,11 +530,11 @@ void render_cursor(int old_x, int old_y, int new_x, int new_y)
     render_text(new_x, new_y, ">", 15);
 }
 
-void start_screen()
+void start_screen(struct Options* opt)
 {
     fill_screen(0);
     
-    typewriter(102, 96, "GET PSYCHED!", 1);
+    typewriter(opt, 102, 96, "GET PSYCHED!", 1);
 }
 
 void gameover_screen()
@@ -514,7 +562,7 @@ void debug_screen_d()
     draw_rectangle(61, 19, 198, 10, 0);
 }
 
-void render(struct GameData* g, struct Cursor* cursor)
+void render(struct GameData* g, struct Cursor* cursor, struct Options* opt)
 {        
     // in case playing, just died, or exited
     // draw play field and objects
@@ -523,20 +571,11 @@ void render(struct GameData* g, struct Cursor* cursor)
         g->game_state == GAME_WIN)
     {
         render_actors(g);
-        //draw_circle();
-        //disco_ball();
     }
-    // if main menu ...
-    else if (g->game_state == GAME_M_MAIN)
+    // if menu ...
+    else if (g->game_state == GAME_MENU)
     {
-        render_menu();
-        render_cursor(cursor->old_x, cursor->old_y, cursor->new_x, cursor->new_y);
-        render_text(125, 65, "START", 15);
-        render_text(125, 80, "OPTIONS", 15);
-        render_text(125, 95, "HELP!", 15);
-        render_text(125, 110, "STORY", 15);
-        render_text(125, 125, "QUIT", 15);
-        render_text(200, 185, "VER. 0.0015A", 0);
+        render_menu(cursor, opt);
     }
     // if end ...
     else if (g->game_state == GAME_END)

@@ -13,15 +13,17 @@
 #define TILE_WIDTH          8
 #define TILE_HEIGHT         8
 
-#define GAME_M_MAIN         0
-#define GAME_M_OPT          1
-#define GAME_M_HLP          2
-#define GAME_M_STOR         3
-#define GAME_M_KCON         4
-#define GAME_INGAME         5
-#define GAME_OVER           6
-#define GAME_WIN            7
-#define GAME_END            8
+#define GAME_MENU           0
+#define GAME_INGAME         1
+#define GAME_OVER           2
+#define GAME_WIN            3
+#define GAME_END            4
+
+#define MENU_MAIN           0
+#define MENU_OPTIONS        1
+#define MENU_HELP           2
+#define MENU_STORY          3
+#define MENU_KEYCONF        4
 
 #define MAX_ACTORS          10
 #define LEVEL_SIZE          level_width * level_height
@@ -60,8 +62,6 @@ struct GameData
 {   
     int game_running;
     int game_state;
-    uint8_t debugmode;
-    uint8_t music_enabled;
     /*int new_game;*/
 
     int level_num;
@@ -85,6 +85,18 @@ struct Cursor
     int new_x;
     int new_y;
     int8_t selection;
+};
+
+struct Options
+{
+    uint8_t menu_status;
+    uint8_t debugmode;
+    uint8_t sfx_on;
+    uint8_t music_on;
+    uint8_t up_movement;
+    uint8_t left_movement;
+    uint8_t down_movement;
+    uint8_t right_movement;
 };
 
 enum SPRITES

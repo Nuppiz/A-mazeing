@@ -21,16 +21,22 @@ void play_note(int freq, int note_length)
 {
     int counter;
 
+    init_speaker();
+
     counter = (PIT_FREQ / freq); // calculate frequency
     outportb(0x42, counter & 0xff); // LSB
     outportb(0x42, counter >> 8); // MSB
     delay(note_length); // wait for a bit
+
+    close_speaker();
 }
 
 void note_loop_up(int note_length, int min_freq, int max_freq)
 {
     int freq;
     int counter;
+
+    init_speaker();
 
     for (freq = min_freq; freq <= max_freq; freq++)
     {
@@ -39,12 +45,16 @@ void note_loop_up(int note_length, int min_freq, int max_freq)
         outportb(0x42, counter >> 8); // MSB
         delay(note_length); // wait for a bit
     }
+
+    close_speaker();
 }
 
 void note_loop_down(int note_length, int max_freq, int min_freq)
 {
     int freq;
     int counter;
+
+    init_speaker();
 
     for (freq = max_freq; freq >= min_freq; freq--)
     {
@@ -53,6 +63,8 @@ void note_loop_down(int note_length, int max_freq, int min_freq)
         outportb(0x42, counter >> 8); // MSB
         delay(note_length); // wait for a bit
     }
+
+    close_speaker();
 }
 
 void play_song()

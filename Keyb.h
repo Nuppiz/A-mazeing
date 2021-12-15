@@ -31,6 +31,7 @@ extern uint8_t* g_Keyboard;
 
 void interrupt far keyhandler();
 void init_keyboard();
+void init_default_keys();
 int initInput();
 void deinit_keyboard();
 void cursor_uo();

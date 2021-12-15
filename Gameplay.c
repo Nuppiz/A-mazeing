@@ -2,8 +2,9 @@
 #include "Gameplay.h"
 
 extern struct GameData g;
+extern struct Options opt;
 
-void player_death(struct GameData* g)
+void player_death(struct GameData* g, struct Options* opt)
 {
     struct Actor* p = &g->Actors[0];
     
@@ -11,7 +12,9 @@ void player_death(struct GameData* g)
     render_maze(g);
     render_actors(g);
     render(g);
-    sound_death();
+
+    if (opt->sfx_on == 1)
+        sound_death();
     delay(1000);
     
     p->type = ACTOR_PLAYER;
@@ -20,10 +23,11 @@ void player_death(struct GameData* g)
     level_loader(g);
 }
 
-void add_key(struct GameData* g)
+void add_key(struct GameData* g, struct Options* opt)
 {
     g->keys_acquired++;
-    sound_key();
+    if (opt->sfx_on == 1)
+        sound_key();
     draw_rectangle(180, 1, 18, 8, 0);
     if (g->level_height > 23)
         render_maze(g);
@@ -71,7 +75,7 @@ void suicide(struct GameData* g)
     g->game_state = GAME_OVER;
 }
 
-void move_actors(struct GameData* g)
+void move_actors(struct GameData* g, struct Options* opt)
 {
     int new_x, new_y;
     int i = 0;
@@ -102,7 +106,7 @@ void move_actors(struct GameData* g)
                     if (g->player_lives < 0)
                         g->game_state = GAME_OVER;
                     else
-                        player_death(g);
+                        player_death(g, opt);
                 break;
             }
             else
@@ -126,7 +130,7 @@ void move_actors(struct GameData* g)
                     if (g->player_lives < 0)
                         g->game_state = GAME_OVER;
                     else
-                        player_death(g);
+                        player_death(g, opt);
                 break;
             }
             else
@@ -144,7 +148,7 @@ void move_actors(struct GameData* g)
     }
 }
 
-void player_hit_detect(struct GameData* g)
+void player_hit_detect(struct GameData* g, struct Options* opt)
 {
     struct Actor* p = &g->Actors[0];
     
@@ -157,12 +161,12 @@ void player_hit_detect(struct GameData* g)
         if (g->player_lives < 0)
             g->game_state = GAME_OVER;
         else
-            player_death(g);
+            player_death(g, opt);
     }
     // collect key
     else if (ACTOR_ON_TILE(p, MAP_KEY))
     {
-        add_key(g);
+        add_key(g, opt);
         SET_TILE(p->x, p->y, MAP_FLOOR);
         render_floor(g, p->x, p->y);
     }
@@ -174,7 +178,8 @@ void player_hit_detect(struct GameData* g)
         {
             p->x -= p->x_vel;
             p->y -= p->y_vel;
-            sound_door_c();
+            if (opt->sfx_on == 1)
+                sound_door_c();
         }
         // otherwise, we remain in the door tile and change tile to DOOR_O
         else
@@ -182,7 +187,8 @@ void player_hit_detect(struct GameData* g)
             remove_key(g);
             SET_TILE(p->x, p->y, MAP_DOOR_O);
             render_door(g, p->x, p->y);
-            sound_door_o();
+            if (opt->sfx_on == 1)
+                sound_door_o();
         }
     }
     // exit and win the level
@@ -190,7 +196,7 @@ void player_hit_detect(struct GameData* g)
         g->game_state = GAME_WIN;
 }
 
-void check_state(struct GameData* g)
+void check_state(struct GameData* g, struct Options* opt)
 {
     if (g->game_state == GAME_OVER)
     {
@@ -198,14 +204,24 @@ void check_state(struct GameData* g)
         render_maze(g);
         render(g);
         gameover_screen();
-        sound_gameover();
-        delay(1000);
-        g->game_state = GAME_M_MAIN;
+        if (opt->sfx_on == 1)
+        {
+            sound_gameover();
+            delay(1000);
+        }
+        else
+            delay(3000);
+        g->game_state = GAME_MENU;
     }
     else if (g->game_state == GAME_WIN)
     {
-        end_song();
-        delay(100);
+        if (opt->music_on == 1)
+        {
+            end_song();
+            delay(100);
+        }
+        else
+            delay(1500);
         
         if (g->level_num == LAST_LEVEL)
             g->game_state = GAME_END;
@@ -214,18 +230,24 @@ void check_state(struct GameData* g)
     }
     else if (g->game_state == GAME_END)
     {
-        end_song();
-        delay(100);
-        g->game_state = GAME_M_MAIN;
+        if (opt->music_on == 1)
+        {
+            end_song();
+            delay(100);
+        }
+        else
+            delay(1500);
+        
+        g->game_state = GAME_MENU;
     }
 }
 
-void game_logic(struct GameData* g)
+void game_logic(struct GameData* g, struct Options* opt)
 {
-    check_state(g);
+    check_state(g, opt);
     if (g->game_state == GAME_INGAME)
     {
-        move_actors(g);
-        player_hit_detect(g);
+        move_actors(g, opt);
+        player_hit_detect(g, opt);
     }
 }
