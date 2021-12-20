@@ -24,8 +24,7 @@ void init_gamedata(struct GameData* g, struct Cursor* cursor, struct Options* op
     memset(g, 0, sizeof(struct GameData));
 
     /* init cursor data */
-    cursor->old_x = 115;
-    cursor->new_x = 115;
+    cursor->x = 105;
     cursor->old_y = 65;
     cursor->new_y = 65;
     cursor->selection = 0;
@@ -50,6 +49,7 @@ void init(struct GameData* g, struct Cursor* cursor, struct Options* opt)
     init_gamedata(g, cursor, opt);
     g->game_running = 1;
     g->game_state = GAME_MENU;
+    change_menu(opt, cursor);
     
     /* init keyboard */
     init_keyboard();

@@ -20,16 +20,22 @@ uint8_t temp_tile [64];
 
 uint8_t* gfx_table[256];
 
+char bgfilename [13];
+
+uint8_t story_text[] =
+    "I COULD WRITE A FANCY STORY BUT" 
+    "CAN'T BE ARSED RN LOL";
+
 void set_tile_gfx()
 {
     _fmemset(gfx_table, SPR_ERROR, 256);
     gfx_table['W'] = sprites[TILE_WALL];
     gfx_table['-'] = sprites[TILE_FLOOR];
     gfx_table['e'] = sprites[TILE_EXIT];
-    gfx_table['|'] = sprites[TILE_DOOR_C];
+    gfx_table['|'] = sprites[COMP_DOOR_C];
     gfx_table['_'] = sprites[TILE_DOOR_O];
-    gfx_table['*'] = sprites[ITEM_KEY];
-    gfx_table['^'] = sprites[ITEM_MINE];
+    gfx_table['*'] = sprites[COMP_KEY];
+    gfx_table['^'] = sprites[COMP_MINE];
 }
 
 void set_mode(uint8_t mode)
@@ -84,7 +90,6 @@ void load_tiles()
 
 void load_special_gfx()
 {
-    load_gfx("GFX/SPLASH.7UP", menu_bground, 64000);
     load_gfx("GFX/FONT.7UP", alphabet, 4240);
 }
 
@@ -97,9 +102,9 @@ void composite_sprite(uint8_t* background, uint8_t* foreground, uint8_t* destina
 
 void create_composites()
 {
-    composite_sprite(sprites[TILE_FLOOR], sprites[ITEM_MINE], sprites[ITEM_MINE]);
-    composite_sprite(sprites[TILE_FLOOR], sprites[ITEM_KEY], sprites[ITEM_KEY]);
-    composite_sprite(sprites[TILE_FLOOR], sprites[TILE_DOOR_C], sprites[TILE_DOOR_C]);
+    composite_sprite(sprites[TILE_FLOOR], sprites[ITEM_MINE], sprites[COMP_MINE]);
+    composite_sprite(sprites[TILE_FLOOR], sprites[ITEM_KEY], sprites[COMP_KEY]);
+    composite_sprite(sprites[TILE_FLOOR], sprites[TILE_DOOR_C], sprites[COMP_DOOR_C]);
 }
 
 void draw_sprite(struct GameData* g, int x, int y, uint8_t* sprite)
@@ -334,12 +339,14 @@ void render_door(struct GameData* g, int x, int y) // used to draw an open door
 
 void render_mine(struct GameData* g, int x, int y) // used to draw mines, duh
 {
-    draw_sprite (g, x * TILE_WIDTH,y * TILE_HEIGHT,sprites[ITEM_MINE]);
+    draw_sprite (g, x * TILE_WIDTH,y * TILE_HEIGHT,sprites[COMP_MINE]);
     draw_shadow (g, x, y);
 }
 
 void typewriter(struct Options* opt, int x, int y, char* string, uint8_t color)
 {
+    int old_x = x;
+
     int i = 0;
     char c;
     
@@ -353,6 +360,11 @@ void typewriter(struct Options* opt, int x, int y, char* string, uint8_t color)
             sound_typing();
         memcpy(VGA,screen_buf,SCREEN_SIZE);
         delay(100);
+        if (x > 311)
+        {
+            x = old_x;
+            y = y + 10;
+        }
     }
 }
 
@@ -468,29 +480,11 @@ void render_actors(struct GameData* g)
     }
 }
 
-void change_menubg(struct Options* opt)
+void render_menu_text(struct Options* opt, struct Cursor* cursor)
 {
-    char* filename;
-
-    if (opt->menu_status == MENU_MAIN)
-        filename = "SPLASH.7UP";
-    else if (opt->menu_status == MENU_OPTIONS)
-        filename = "OPTIONS.7UP";
-
-    printf("%s", filename);
-    delay(1000);
-
-    fill_screen(0);
-    load_gfx(filename, menu_bground, 64000);
-}
-
-void render_menu(struct Cursor* cursor, struct Options* opt)
-{
-    draw_big(0, 0, 320, 200, menu_bground);
-
     if (opt->menu_status == MENU_MAIN)
     {
-        cursor->new_x = 115;
+        cursor->x = 105;
         render_text(125, 65, "START", 15);
         render_text(125, 80, "OPTIONS", 15);
         render_text(125, 95, "HELP!", 15);
@@ -500,7 +494,7 @@ void render_menu(struct Cursor* cursor, struct Options* opt)
 
     else if(opt->menu_status == MENU_OPTIONS)
     {
-        cursor->new_x = 101;
+        cursor->x = 91;
         render_text(111, 65, "SOUNDS", 15);
         if (opt->sfx_on == 1)
             render_text(191, 65, "ON", 15);
@@ -513,21 +507,67 @@ void render_menu(struct Cursor* cursor, struct Options* opt)
             render_text(191, 105, "OFF", 15);
         render_text(111, 145, "KEY CONFIG", 15);
     }
+    else if(opt->menu_status == MENU_STORY)
+    {
+        render_text(200, 185, "VER. 0.0016A", 0); 
+        typewriter(opt, 4, 52, story_text, 15);
+    }
 
-    render_cursor(cursor->old_x, cursor->old_y, cursor->new_x, cursor->new_y);
-    render_text(200, 185, "VER. 0.0015A", 0);
+    render_text(200, 185, "VER. 0.0016A", 0);    
+}
+
+void draw_help_contents(struct GameData* g)
+{
+    draw_sprite_tr(g, 48, 64, sprites[SPR_PLAYER]);
+    draw_sprite(g, 48, 76, sprites[TILE_WALL]);
+    draw_sprite_tr(g, 48, 88,sprites[SPR_GUARD]);
+    draw_sprite_tr(g, 48, 100,sprites[ITEM_MINE]);
+    draw_sprite_tr(g, 48, 112,sprites[TILE_DOOR_C]);
+    draw_sprite_tr(g, 48, 124,sprites[ITEM_KEY]);
+    draw_sprite(g, 48, 135,sprites[TILE_EXIT]);
+}
+
+void change_menu(struct Options* opt, struct Cursor* cursor)
+{
+    char* bgfilename;
+
+    if (opt->menu_status == MENU_OPTIONS)
+        bgfilename = "GFX/OPTIONS.7UP";
+    
+    else if (opt->menu_status == MENU_KEYCONF)
+        bgfilename = "GFX/KCONF.7UP";
+
+    else if (opt->menu_status == MENU_HELP)
+        bgfilename = "GFX/HELP.7UP";
+
+    else if (opt->menu_status == MENU_STORY)
+        bgfilename = "GFX/STORY.7UP";
+
+    else
+        bgfilename = "GFX/SPLASH.7UP";
+
+    load_gfx(bgfilename, menu_bground, 64000);
+
+    draw_big(0, 0, 320, 200, menu_bground);
+
+    render_menu_text(opt, cursor);
+}
+
+void render_cursor(int x, int old_y, int new_y)
+{
+    render_text(x, old_y, " ", 15);
+    render_text(x, new_y, "->", 15);
+}
+
+void render_menu(struct Cursor* cursor)
+{
+    render_cursor(cursor->x, cursor->old_y, cursor->new_y);
 }
 
 void render_end()
 {
     fill_screen(0);
     render_text(122, 96, "YOU WIN!", 14);
-}
-
-void render_cursor(int old_x, int old_y, int new_x, int new_y)
-{
-    render_text(old_x, old_y, " ", 15);
-    render_text(new_x, new_y, ">", 15);
 }
 
 void start_screen(struct Options* opt)
@@ -572,10 +612,11 @@ void render(struct GameData* g, struct Cursor* cursor, struct Options* opt)
     {
         render_actors(g);
     }
-    // if menu ...
+    // if main, options or keyconfig menu ...
     else if (g->game_state == GAME_MENU)
     {
-        render_menu(cursor, opt);
+        if (opt->menu_status != MENU_HELP && opt->menu_status != MENU_STORY)
+            render_menu(cursor);
     }
     // if end ...
     else if (g->game_state == GAME_END)

@@ -85,22 +85,26 @@ void deinit_keyboard()
     g_Input = NULL;
 }
 
-void cursor_up(struct Cursor* cursor, uint8_t max_choices, uint8_t choice_spacing)
+void cursor_up(struct Cursor* cursor, struct Options* opt, uint8_t max_choices, uint8_t choice_spacing)
 {
+    change_menu(opt, cursor); // optimize later
     if (cursor->selection == 0) // if already at the top selection...
     {
+        cursor->old_y = cursor->new_y;
         cursor->new_y = cursor->old_y + max_choices * choice_spacing; // move cursor to bottom selection
         cursor->selection = max_choices;
     }
     else
     {
+        cursor->old_y = cursor->new_y;
         cursor->new_y = cursor->new_y - choice_spacing;
         cursor->selection--;
     }
 }
 
-void cursor_down(struct Cursor* cursor, uint8_t max_choices, uint8_t choice_spacing)
+void cursor_down(struct Cursor* cursor, struct Options* opt, uint8_t max_choices, uint8_t choice_spacing)
 {
+    change_menu(opt, cursor); // optimize later
     if (cursor->selection == max_choices) // if already at the bottom selection...
     {
         cursor->new_y = cursor->new_y - max_choices * choice_spacing; // move cursor to top selection
@@ -141,31 +145,40 @@ void control_menu(struct GameData* g, struct Cursor* cursor, struct Options* opt
     {
         if (opt->sfx_on == 1)
             play_note(600, 10);
-        cursor_up(cursor, max_choices, choice_spacing);
+        cursor_up(cursor, opt, max_choices, choice_spacing);
     }
     else if (KEY_WAS_HIT(KEY_DOWN))
     {
         if (opt->sfx_on == 1)
             play_note(600, 10);
-        cursor_down(cursor, max_choices, choice_spacing);
+        cursor_down(cursor, opt, max_choices, choice_spacing);
     }
 
-    else if (KEY_WAS_HIT(KEY_ESC) && opt->menu_status != MENU_MAIN || KEY_WAS_HIT(KEY_ESC) && opt->menu_status != MENU_KEYCONF)
+    else if (KEY_WAS_HIT(KEY_ESC))
     {
+        if (opt->menu_status != MENU_MAIN && opt->menu_status != MENU_KEYCONF)
+        {
+            opt->menu_status = MENU_MAIN;
+            change_menu(opt, cursor);
+            cursor->new_y = 65;
+            cursor->selection = 0;
+        }
+    }
+}
+
+void control_end(struct GameData* g, struct Cursor* cursor, struct Options* opt)
+{
+    if (KEY_WAS_HIT(KEY_SPACE))
+    {
+        g->game_state = GAME_MENU;
         opt->menu_status = MENU_MAIN;
-        change_menubg();
+        change_menu(opt, cursor);
         cursor->new_y = 65;
         cursor->selection = 0;
     }
 }
 
-void control_end(struct GameData* g)
-{
-    if (KEY_WAS_HIT(KEY_SPACE))
-        g->game_state = GAME_MENU;
-}
-
-void control_ingame(struct GameData* g, struct Options* opt)
+void control_ingame(struct GameData* g, struct Cursor* cursor, struct Options* opt)
 {
     static axis = 0;
     struct Actor* player = g->Actors+0; // same as &g->Actors[0]
@@ -218,7 +231,13 @@ void control_ingame(struct GameData* g, struct Options* opt)
     }
 
     else if(KEY_WAS_HIT(KEY_ESC))
+    {
         g->game_state = GAME_MENU;
+        opt->menu_status = MENU_MAIN;
+        change_menu(opt, cursor);
+        cursor->new_y = 65;
+        cursor->selection = 0;
+    }
     
     if (opt->debugmode == 1)
     {
@@ -277,9 +296,9 @@ void process_input(struct GameData* g, struct Cursor* cursor, struct Options* op
     if (g->game_state == GAME_MENU)
         control_menu(g, cursor, opt);
     else if (g->game_state == GAME_END)
-        control_end(g);
+        control_end(g, cursor, opt);
     else if (g->game_state == GAME_INGAME)
-        control_ingame(g, opt);
+        control_ingame(g, cursor, opt);
     
     // F10 always exits, wherever you are
     if (KEY_WAS_HIT(KEY_F10))

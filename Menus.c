@@ -12,9 +12,20 @@ void selections_main(struct GameData* g, struct Cursor* cursor, struct Options* 
     else if (cursor->selection == 1)
     {
         opt->menu_status = MENU_OPTIONS;
-        change_menubg();
+        change_menu(opt, cursor);
         cursor->new_y = 65;
         cursor->selection = 0;
+    }
+    else if (cursor->selection == 2)
+    {
+        opt->menu_status = MENU_HELP;
+        change_menu(opt, cursor);
+        draw_help_contents(g);
+    }
+    else if (cursor->selection == 3)
+    {
+        opt->menu_status = MENU_STORY;
+        change_menu(opt, cursor);
     }
     else if (cursor->selection == 4)
         g->game_running = 0;
@@ -28,6 +39,8 @@ void selections_options(struct Cursor* cursor, struct Options* opt)
             opt->sfx_on = 0;
         else
             opt->sfx_on = 1;
+        change_menu(opt, cursor); // optimize later
+        render_menu_text(cursor, opt);
     }
     else if (cursor->selection == 1)
     {
@@ -35,6 +48,8 @@ void selections_options(struct Cursor* cursor, struct Options* opt)
             opt->music_on = 0;
         else
             opt->music_on = 1;
+        change_menu(opt, cursor); // optimize later
+        render_menu_text(cursor, opt);
     }
     else if (cursor->selection == 2)
         opt->menu_status = MENU_KEYCONF;

@@ -80,9 +80,8 @@ struct GameData
 
 struct Cursor
 {
-    int old_x;
+    int x;
     int old_y;
-    int new_x;
     int new_y;
     int8_t selection;
 };
@@ -119,5 +118,8 @@ enum SPRITES
     SHAD_OUT_COR,
     SHAD_MINE,
     SHAD_KEY,
+    COMP_KEY,
+    COMP_MINE,
+    COMP_DOOR_C,
     NUM_SPRITES
 };
