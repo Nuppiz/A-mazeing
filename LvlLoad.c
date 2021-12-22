@@ -2,6 +2,8 @@
 #include "LvlLoad.h"
 
 extern struct GameData g;
+extern struct Sprite player_sprite;
+extern struct Sprite guard_sprite;
 
 void level_loader(struct GameData* g)
 {
@@ -51,6 +53,8 @@ void level_loader(struct GameData* g)
                 g->Actors[0].old_x = g->Actors[0].x;
                 g->Actors[0].old_y = g->Actors[0].y;
 
+                g->Actors[0].sprite = player_sprite;
+
                 g->actor_count++;
             }
             else if (strcmp(buffer, "guard") == 0)
@@ -68,6 +72,7 @@ void level_loader(struct GameData* g)
                     g->object_map[g->Actors[g->actor_count].y * g->level_width + g->Actors[g->actor_count].x] = ACTOR_GUARD;
                     g->Actors[g->actor_count].old_x = g->Actors[g->actor_count].x;
                     g->Actors[g->actor_count].old_y = g->Actors[g->actor_count].y;
+                    g->Actors[g->actor_count].sprite = guard_sprite;
                     g->actor_count++;
                 }
             }

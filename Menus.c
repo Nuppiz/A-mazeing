@@ -53,6 +53,7 @@ void selections_options(struct Cursor* cursor, struct Options* opt)
     }
     else if (cursor->selection == 2)
         opt->menu_status = MENU_KEYCONF;
+        change_menu(opt, cursor); // optimize later
 }
 
 void menu_controller(struct GameData* g, struct Cursor* cursor, struct Options* opt)

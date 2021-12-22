@@ -115,8 +115,6 @@ void sound_gameover()
     play_note(225, 350);
     play_note(250, 350);
     play_note(200, 350);
-    play_note(170, 150);
-    play_note(200, 150);
     play_note(150, 1000);
     close_speaker();
 }

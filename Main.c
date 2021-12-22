@@ -80,7 +80,7 @@ void main()
     while (g.game_running == 1)
     {
         process_input(&g, &cursor, &opt);
-        game_logic(&g, &opt);
+        game_logic(&g, &cursor, &opt);
         render(&g, &cursor, &opt);
         if (opt.music_on == 1 && g.game_state != GAME_MENU)
         {

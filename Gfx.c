@@ -10,7 +10,6 @@ union REGS regs;
 extern struct GameData g;
 extern struct Cursor cursor;
 extern struct Options opt;
-extern uint16_t notes;
 
 // reserve memory for sprites
 uint8_t far menu_bground [64000];
@@ -25,6 +24,11 @@ char bgfilename [13];
 uint8_t story_text[] =
     "I COULD WRITE A FANCY STORY BUT" 
     "CAN'T BE ARSED RN LOL";
+
+uint8_t anims[NUM_ANIMS][192];
+
+struct Sprite player_sprite = {anims[SPR_PLAYER], 8, 8, 64, 0, 0};
+struct Sprite guard_sprite = {anims[SPR_GUARD], 8, 8, 64, 0, 0};
 
 void set_tile_gfx()
 {
@@ -66,6 +70,14 @@ void load_sprite(int tile_id, char* filename)
     fclose(file_ptr);
 }
 
+void load_anim(int anim_id, char* filename)
+{
+    FILE* file_ptr;
+    file_ptr = fopen(filename, "rb");
+    fread(anims[anim_id], 1, 192, file_ptr);
+    fclose(file_ptr);
+}
+
 void load_tiles()
 {
     load_sprite(TILE_FLOOR, "GFX/FLOOR.7UP");
@@ -75,17 +87,17 @@ void load_tiles()
     load_sprite(TILE_EXIT, "GFX/EXIT.7UP");
     load_sprite(ITEM_KEY, "GFX/KEY.7UP");
     load_sprite(ITEM_MINE, "GFX/MINE.7UP");
-    load_sprite(SPR_PLAYER, "GFX/PLAYER.7UP");
-    load_sprite(SPR_GUARD, "GFX/GUARD.7UP");
-    load_sprite(SPR_EXPLO, "GFX/EXPLO.7UP");
-    load_sprite(SPR_GRAVE, "GFX/GRAVE.7UP");
-    load_sprite(SPR_ERROR, "GFX/ERROR.7UP");
     load_sprite(SHAD_IN_COR, "GFX/SHAD_IC.7UP");
     load_sprite(SHAD_HORZ, "GFX/SHAD_H.7UP");
     load_sprite(SHAD_VERT, "GFX/SHAD_V.7UP");
     load_sprite(SHAD_OUT_COR, "GFX/SHAD_OC.7UP");
     load_sprite(SHAD_MINE, "GFX/SHAD_M.7UP");
     load_sprite(SHAD_KEY, "GFX/SHAD_K.7UP");
+    load_anim(SPR_PLAYER, "GFX/PLAYER.7UP");
+    load_anim(SPR_GUARD, "GFX/GUARD.7UP");
+    load_sprite(SPR_EXPLO, "GFX/EXPLO.7UP");
+    load_sprite(SPR_GRAVE, "GFX/GRAVE.7UP");
+    load_sprite(SPR_ERROR, "GFX/ERROR.7UP");
 }
 
 void load_special_gfx()
@@ -160,7 +172,7 @@ void draw_sprite_tr(struct GameData* g, int x, int y, uint8_t* sprite)
 {
     uint8_t index_x = 0;
     uint8_t index_y = 0;
-    uint8_t i = 0;
+    int pixel = 0;
     
     x += g->render_offset_x;
     y += g->render_offset_y;
@@ -169,15 +181,15 @@ void draw_sprite_tr(struct GameData* g, int x, int y, uint8_t* sprite)
     {
         for (index_x=0;index_x<TILE_WIDTH;index_x++)
         {
-            if (sprite[i] != 13)
+            if (sprite[pixel] != 13)
             {
-                SET_PIXEL(x, y, sprite[i]);
-                i++;
+                SET_PIXEL(x, y, sprite[pixel]);
+                pixel++;
                 x++;
             }
             else
             {
-                i++;
+                pixel++;
                 x++;
             }
         }
@@ -332,9 +344,9 @@ void render_floor(struct GameData* g, int x, int y) // used to empty tiles after
 
 void render_door(struct GameData* g, int x, int y) // used to draw an open door
 {
-    draw_sprite     (g, x * TILE_WIDTH,y * TILE_HEIGHT,sprites[TILE_FLOOR]);
+    draw_sprite     (g, x * TILE_WIDTH,y * TILE_HEIGHT, sprites[TILE_FLOOR]);
     draw_shadow     (g, x, y);
-    draw_sprite_tr  (g, x * TILE_WIDTH,y * TILE_HEIGHT,sprites[TILE_DOOR_O]);
+    draw_sprite_tr  (g, x * TILE_WIDTH,y * TILE_HEIGHT, sprites[TILE_DOOR_O]);
 }
 
 void render_mine(struct GameData* g, int x, int y) // used to draw mines, duh
@@ -417,29 +429,30 @@ void render_maze(struct GameData* g)
 
 void render_actors(struct GameData* g)
 {
-    uint8_t* sprite;
+    uint8_t* pixels;
     int i;
     
     i = 0;
     while (i < g->actor_count)
     {
         
-        switch (g->Actors[i].type)
-        {
-            case ACTOR_PLAYER:  sprite = sprites[SPR_PLAYER]; break;
-            case ACTOR_GUARD:   sprite = sprites[SPR_GUARD];  break;
-            default:            sprite = sprites[SPR_ERROR];  break;
-        }
-        
-        if (sprite == sprites[SPR_ERROR])
+        if (pixels == sprites[SPR_ERROR])
         {
             i++;
             continue;
         }
+
+        else
+            pixels = g->Actors[i].sprite.pixels;
+
+        g->Actors[i].sprite.frame++;
+
+        if (g->Actors[i].sprite.frame >= g->Actors[i].sprite.num_frames)
+            g->Actors[i].sprite.frame = 0;
         
         draw_sprite_tr(g, g->Actors[i].x * TILE_WIDTH,
                        g->Actors[i].y * TILE_HEIGHT,
-                       sprite);
+                       pixels + (g->Actors[i].sprite.frame * g->Actors[i].sprite.size));
 
         // if actor has changed position, render an empty floor tile in the old location, unless it's a door frame or mine         
         if (g->Actors[i].x != g->Actors[i].old_x || g->Actors[i].y != g->Actors[i].old_y)
@@ -461,13 +474,13 @@ void render_actors(struct GameData* g)
         
         switch (g->Actors[i].type)
         {
-            case ACTOR_GRAVE:   sprite = sprites[SPR_GRAVE];  break;
-            case ACTOR_EXPLO:   sprite = sprites[SPR_EXPLO];  break;
-            case ACTOR_EMPTY:   sprite = sprites[SPR_GRAVE];  break;
-            default:            sprite = sprites[SPR_ERROR];  break;
+            case ACTOR_GRAVE:   pixels = sprites[SPR_GRAVE];  break;
+            case ACTOR_EXPLO:   pixels = sprites[SPR_EXPLO];  break;
+            case ACTOR_EMPTY:   pixels = sprites[SPR_GRAVE];  break;
+            default:            pixels = sprites[SPR_ERROR];  break;
         }
         
-        if (sprite == sprites[SPR_ERROR])
+        if (pixels == sprites[SPR_ERROR])
         {
             i++;
             continue;
@@ -475,7 +488,7 @@ void render_actors(struct GameData* g)
         
         draw_sprite_tr(g, g->Actors[i].x * TILE_WIDTH,
                        g->Actors[i].y * TILE_HEIGHT,
-                       sprite);                       
+                       pixels);                       
         i++;
     }
 }
@@ -518,12 +531,16 @@ void render_menu_text(struct Options* opt, struct Cursor* cursor)
 
 void draw_help_contents(struct GameData* g)
 {
-    draw_sprite_tr(g, 48, 64, sprites[SPR_PLAYER]);
+    // reset offsets in case they have been changed in-game
+    g->render_offset_x = 0;
+    g->render_offset_y = 0;
+
+    draw_sprite_tr(g, 48, 64, anims[SPR_PLAYER]);
     draw_sprite(g, 48, 76, sprites[TILE_WALL]);
-    draw_sprite_tr(g, 48, 88,sprites[SPR_GUARD]);
-    draw_sprite_tr(g, 48, 100,sprites[ITEM_MINE]);
-    draw_sprite_tr(g, 48, 112,sprites[TILE_DOOR_C]);
-    draw_sprite_tr(g, 48, 124,sprites[ITEM_KEY]);
+    draw_sprite_tr(g, 48, 88, anims[SPR_GUARD]);
+    draw_sprite_tr(g, 48, 100, sprites[ITEM_MINE]);
+    draw_sprite_tr(g, 48, 112, sprites[TILE_DOOR_C]);
+    draw_sprite_tr(g, 48, 124, sprites[ITEM_KEY]);
     draw_sprite(g, 48, 135,sprites[TILE_EXIT]);
 }
 

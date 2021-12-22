@@ -48,14 +48,23 @@
 
 #define TICKS               (*(volatile unsigned long far *)(0x0040006CL))
 
-//macros
+// macros
 #define TILE_AT(x, y)           g->tile_data[(y) * g->level_width + (x)]
 #define SET_TILE(x, y, tile)    TILE_AT(x, y) = tile
+
+// structs
+
+struct Sprite
+{
+  uint8_t* pixels;
+  uint16_t w, h, size, num_frames, frame;
+};
 
 struct Actor
 {
     int8_t x, y, x_vel, y_vel, type, old_x, old_y;
     int8_t direction;
+    struct Sprite sprite;
 };
 
 struct GameData
@@ -107,8 +116,6 @@ enum SPRITES
     TILE_EXIT,
     ITEM_KEY,
     ITEM_MINE,
-    SPR_PLAYER,
-    SPR_GUARD,
     SPR_EXPLO,
     SPR_GRAVE,
     SPR_ERROR,
@@ -122,4 +129,11 @@ enum SPRITES
     COMP_MINE,
     COMP_DOOR_C,
     NUM_SPRITES
+};
+
+enum ANIMS
+{
+    SPR_PLAYER,
+    SPR_GUARD,
+    NUM_ANIMS
 };

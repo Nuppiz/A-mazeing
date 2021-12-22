@@ -134,31 +134,42 @@ void control_menu(struct GameData* g, struct Cursor* cursor, struct Options* opt
         choice_spacing = 40;
     }
 
-    if (KEY_WAS_HIT(KEY_ENTER))
+
+    if (opt->menu_status != MENU_HELP && opt->menu_status != MENU_STORY) // disable cursor controls in Help and Story menus (as they have nothing to select)
     {
-        if (opt->sfx_on == 1)
-            play_note(100, 10);
-        menu_controller(g, cursor, opt);
+        if (KEY_WAS_HIT(KEY_ENTER))
+        {
+            if (opt->sfx_on == 1)
+                play_note(100, 10);
+            menu_controller(g, cursor, opt);
+        }
+
+        else if (KEY_WAS_HIT(KEY_UP))
+        {
+            if (opt->sfx_on == 1)
+                play_note(600, 10);
+            cursor_up(cursor, opt, max_choices, choice_spacing);
+        }
+        else if (KEY_WAS_HIT(KEY_DOWN))
+        {
+            if (opt->sfx_on == 1)
+                play_note(600, 10);
+            cursor_down(cursor, opt, max_choices, choice_spacing);
+        }
     }
 
-    else if (KEY_WAS_HIT(KEY_UP))
-    {
-        if (opt->sfx_on == 1)
-            play_note(600, 10);
-        cursor_up(cursor, opt, max_choices, choice_spacing);
-    }
-    else if (KEY_WAS_HIT(KEY_DOWN))
-    {
-        if (opt->sfx_on == 1)
-            play_note(600, 10);
-        cursor_down(cursor, opt, max_choices, choice_spacing);
-    }
-
-    else if (KEY_WAS_HIT(KEY_ESC))
+    if (KEY_WAS_HIT(KEY_ESC))
     {
         if (opt->menu_status != MENU_MAIN && opt->menu_status != MENU_KEYCONF)
         {
             opt->menu_status = MENU_MAIN;
+            change_menu(opt, cursor);
+            cursor->new_y = 65;
+            cursor->selection = 0;
+        }
+        else if (opt->menu_status == MENU_KEYCONF)
+        {
+            opt->menu_status = MENU_OPTIONS;
             change_menu(opt, cursor);
             cursor->new_y = 65;
             cursor->selection = 0;

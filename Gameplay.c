@@ -196,7 +196,7 @@ void player_hit_detect(struct GameData* g, struct Options* opt)
         g->game_state = GAME_WIN;
 }
 
-void check_state(struct GameData* g, struct Options* opt)
+void check_state(struct GameData* g, struct Options* opt, struct Cursor* cursor)
 {
     if (g->game_state == GAME_OVER)
     {
@@ -212,6 +212,10 @@ void check_state(struct GameData* g, struct Options* opt)
         else
             delay(3000);
         g->game_state = GAME_MENU;
+        opt->menu_status = MENU_MAIN;
+        change_menu(opt, cursor);
+        cursor->new_y = 65;
+        cursor->selection = 0;
     }
     else if (g->game_state == GAME_WIN)
     {
@@ -239,12 +243,16 @@ void check_state(struct GameData* g, struct Options* opt)
             delay(1500);
         
         g->game_state = GAME_MENU;
+        opt->menu_status = MENU_MAIN;
+        change_menu(opt, cursor);
+        cursor->new_y = 65;
+        cursor->selection = 0;
     }
 }
 
-void game_logic(struct GameData* g, struct Options* opt)
+void game_logic(struct GameData* g, struct Cursor* cursor, struct Options* opt)
 {
-    check_state(g, opt);
+    check_state(g, opt, cursor);
     if (g->game_state == GAME_INGAME)
     {
         move_actors(g, opt);
