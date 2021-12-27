@@ -2,13 +2,15 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <dos.h>
-#include <math.h>
 
 #define VGA_256_COLOR_MODE  0x13      /* use to set 256-color mode. */
 #define TEXT_MODE           0x03      /* use to set 80x25 text mode. */
 
 #define SCREEN_WIDTH        320       /* width in pixels */
 #define SCREEN_HEIGHT       200       /* height in pixels */
+
+#define INPUT_STATUS        0x03da
+#define VRETRACE            0x08
 
 #define TILE_WIDTH          8
 #define TILE_HEIGHT         8
@@ -57,7 +59,7 @@
 struct Sprite
 {
   uint8_t* pixels;
-  uint16_t w, h, size, num_frames, frame;
+  int16_t w, h, size, num_frames, frame;
 };
 
 struct Actor
@@ -93,6 +95,7 @@ struct Cursor
     int old_y;
     int new_y;
     int8_t selection;
+    int8_t old_selection;
 };
 
 struct Options
@@ -116,7 +119,6 @@ enum SPRITES
     TILE_EXIT,
     ITEM_KEY,
     ITEM_MINE,
-    SPR_EXPLO,
     SPR_GRAVE,
     SPR_ERROR,
     SHAD_IN_COR,
@@ -135,5 +137,6 @@ enum ANIMS
 {
     SPR_PLAYER,
     SPR_GUARD,
+    SPR_EXPLO,
     NUM_ANIMS
 };

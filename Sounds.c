@@ -121,8 +121,6 @@ void sound_gameover()
 
 void sound_death()
 {
-    int i, counter;
-
     init_speaker();
     note_loop_up(1, 100, 500);
     note_loop_down(1, 500, 100);

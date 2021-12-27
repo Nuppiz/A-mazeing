@@ -27,8 +27,9 @@ uint8_t story_text[] =
 
 uint8_t anims[NUM_ANIMS][192];
 
-struct Sprite player_sprite = {anims[SPR_PLAYER], 8, 8, 64, 0, 0};
-struct Sprite guard_sprite = {anims[SPR_GUARD], 8, 8, 64, 0, 0};
+struct Sprite player_sprite = {anims[SPR_PLAYER], 8, 8, 64, 3, 0};
+struct Sprite guard_sprite = {anims[SPR_GUARD], 8, 8, 64, 3, 0};
+struct Sprite explo_sprite = {anims[SPR_EXPLO], 8, 8, 64, 3, 0};
 
 void set_tile_gfx()
 {
@@ -95,7 +96,7 @@ void load_tiles()
     load_sprite(SHAD_KEY, "GFX/SHAD_K.7UP");
     load_anim(SPR_PLAYER, "GFX/PLAYER.7UP");
     load_anim(SPR_GUARD, "GFX/GUARD.7UP");
-    load_sprite(SPR_EXPLO, "GFX/EXPLO.7UP");
+    load_anim(SPR_EXPLO, "GFX/EXPLO.7UP");
     load_sprite(SPR_GRAVE, "GFX/GRAVE.7UP");
     load_sprite(SPR_ERROR, "GFX/ERROR.7UP");
 }
@@ -427,6 +428,42 @@ void render_maze(struct GameData* g)
     render_stats(g);
 }
 
+void anim_explosion(struct GameData* g)
+{
+    struct Actor p = g->Actors[0];
+    uint8_t* pixels;
+
+    p.sprite = explo_sprite;
+    pixels = p.sprite.pixels;
+
+    SET_TILE(p.x, p.y, MAP_FLOOR); // "delete" mine
+    render_floor(g, p.x, p.y); // "delete" player sprite
+
+    for (p.sprite.frame = 0;p.sprite.frame < p.sprite.num_frames;p.sprite.frame++)
+    {
+        delay(150);
+        draw_sprite_tr(g, p.x * TILE_WIDTH,
+                       p.y * TILE_HEIGHT,
+                       pixels + (p.sprite.frame * p.sprite.size));
+        memcpy(VGA,screen_buf,SCREEN_SIZE);
+    }
+    
+    for (p.sprite.frame = 2;p.sprite.frame > -1;p.sprite.frame--)
+    {
+        delay(150);
+        render_floor(g, p.x, p.y);
+        draw_sprite_tr(g, p.x * TILE_WIDTH,
+                       p.y * TILE_HEIGHT,
+                       pixels + (p.sprite.frame * p.sprite.size));
+        memcpy(VGA,screen_buf,SCREEN_SIZE);
+    }
+
+    delay(150);
+    render_floor(g, p.x, p.y);
+    
+    p.sprite = player_sprite;   
+}
+
 void render_actors(struct GameData* g)
 {
     uint8_t* pixels;
@@ -451,8 +488,8 @@ void render_actors(struct GameData* g)
             g->Actors[i].sprite.frame = 0;
         
         draw_sprite_tr(g, g->Actors[i].x * TILE_WIDTH,
-                       g->Actors[i].y * TILE_HEIGHT,
-                       pixels + (g->Actors[i].sprite.frame * g->Actors[i].sprite.size));
+                    g->Actors[i].y * TILE_HEIGHT,
+                    pixels + (g->Actors[i].sprite.frame * g->Actors[i].sprite.size));
 
         // if actor has changed position, render an empty floor tile in the old location, unless it's a door frame or mine         
         if (g->Actors[i].x != g->Actors[i].old_x || g->Actors[i].y != g->Actors[i].old_y)
@@ -475,7 +512,6 @@ void render_actors(struct GameData* g)
         switch (g->Actors[i].type)
         {
             case ACTOR_GRAVE:   pixels = sprites[SPR_GRAVE];  break;
-            case ACTOR_EXPLO:   pixels = sprites[SPR_EXPLO];  break;
             case ACTOR_EMPTY:   pixels = sprites[SPR_GRAVE];  break;
             default:            pixels = sprites[SPR_ERROR];  break;
         }
@@ -572,7 +608,6 @@ void change_menu(struct Options* opt, struct Cursor* cursor)
 
 void render_cursor(int x, int old_y, int new_y)
 {
-    render_text(x, old_y, " ", 15);
     render_text(x, new_y, "->", 15);
 }
 
@@ -628,6 +663,8 @@ void render(struct GameData* g, struct Cursor* cursor, struct Options* opt)
         g->game_state == GAME_WIN)
     {
         render_actors(g);
+        if (g->Actors[0].type == ACTOR_EXPLO)
+            anim_explosion(g);
     }
     // if main, options or keyconfig menu ...
     else if (g->game_state == GAME_MENU)

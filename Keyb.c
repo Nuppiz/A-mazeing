@@ -119,8 +119,8 @@ void cursor_down(struct Cursor* cursor, struct Options* opt, uint8_t max_choices
 
 void control_menu(struct GameData* g, struct Cursor* cursor, struct Options* opt)
 {
-    uint8_t max_choices = 0;
-    uint8_t choice_spacing = 0;
+    uint8_t max_choices;
+    uint8_t choice_spacing;
 
     if (opt->menu_status == MENU_MAIN)
     {
@@ -140,7 +140,11 @@ void control_menu(struct GameData* g, struct Cursor* cursor, struct Options* opt
         if (KEY_WAS_HIT(KEY_ENTER))
         {
             if (opt->sfx_on == 1)
+            {
                 play_note(100, 10);
+            }
+            cursor->old_selection = cursor->selection;
+            cursor->old_y = cursor->new_y;
             menu_controller(g, cursor, opt);
         }
 
@@ -150,6 +154,7 @@ void control_menu(struct GameData* g, struct Cursor* cursor, struct Options* opt
                 play_note(600, 10);
             cursor_up(cursor, opt, max_choices, choice_spacing);
         }
+
         else if (KEY_WAS_HIT(KEY_DOWN))
         {
             if (opt->sfx_on == 1)
@@ -163,16 +168,18 @@ void control_menu(struct GameData* g, struct Cursor* cursor, struct Options* opt
         if (opt->menu_status != MENU_MAIN && opt->menu_status != MENU_KEYCONF)
         {
             opt->menu_status = MENU_MAIN;
+            cursor->new_y = cursor->old_y;
+            cursor->selection = cursor->old_selection;
             change_menu(opt, cursor);
-            cursor->new_y = 65;
-            cursor->selection = 0;
         }
         else if (opt->menu_status == MENU_KEYCONF)
         {
             opt->menu_status = MENU_OPTIONS;
+            cursor->new_y = 145;
+            cursor->selection = 2;
+            cursor->old_y = 80;
+            cursor->old_selection = 1;
             change_menu(opt, cursor);
-            cursor->new_y = 65;
-            cursor->selection = 0;
         }
     }
 }

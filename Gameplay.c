@@ -4,6 +4,18 @@
 extern struct GameData g;
 extern struct Options opt;
 
+void start_game(struct GameData* g, struct Options* opt)
+{
+    start_screen(opt);
+    delay(2000);
+    
+    fill_screen(0);
+    g->game_state = GAME_INGAME;
+    g->level_num = 1;
+    g->player_lives = 3;
+    level_loader(g);
+}
+
 void player_death(struct GameData* g, struct Options* opt)
 {
     struct Actor* p = &g->Actors[0];
@@ -15,7 +27,8 @@ void player_death(struct GameData* g, struct Options* opt)
 
     if (opt->sfx_on == 1)
         sound_death();
-    delay(1000);
+    else
+        delay(600);
     
     p->type = ACTOR_PLAYER;
     _fmemset(g->object_map, ACTOR_EMPTY, MAPSIZE);
@@ -200,9 +213,6 @@ void check_state(struct GameData* g, struct Options* opt, struct Cursor* cursor)
 {
     if (g->game_state == GAME_OVER)
     {
-        fill_screen(0);
-        render_maze(g);
-        render(g);
         gameover_screen();
         if (opt->sfx_on == 1)
         {

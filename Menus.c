@@ -8,7 +8,7 @@ extern struct Options opt;
 void selections_main(struct GameData* g, struct Cursor* cursor, struct Options* opt)
 {
     if (cursor->selection == 0)
-        start_game(g);
+        start_game(g, opt);
     else if (cursor->selection == 1)
     {
         opt->menu_status = MENU_OPTIONS;
