@@ -6,6 +6,10 @@ extern struct GameData g;
 extern struct Cursor cursor;
 extern struct Options opt;
 
+extern uint8_t minutes;
+extern uint16_t seconds;
+extern uint16_t timer;
+
 Input_t Input = {0};
 Input_t* g_Input = &Input;
 uint8_t* g_Keyboard = Input.kb_array;
@@ -135,7 +139,7 @@ void control_menu(struct GameData* g, struct Cursor* cursor, struct Options* opt
     }
 
 
-    if (opt->menu_status != MENU_HELP && opt->menu_status != MENU_STORY) // disable cursor controls in Help and Story menus (as they have nothing to select)
+    if (opt->menu_status != MENU_HELP && opt->menu_status != MENU_STORY) /* disable cursor controls in Help and Story menus (as they have nothing to select)*/
     {
         if (KEY_WAS_HIT(KEY_ENTER))
         {
@@ -143,8 +147,12 @@ void control_menu(struct GameData* g, struct Cursor* cursor, struct Options* opt
             {
                 play_note(100, 10);
             }
-            cursor->old_selection = cursor->selection;
-            cursor->old_y = cursor->new_y;
+            if (opt->menu_status != MENU_OPTIONS) /* don't update cursor location if changing something in the options menu*/
+            {
+                cursor->old_selection = cursor->selection;
+                cursor->old_y = cursor->new_y;
+            }
+
             menu_controller(g, cursor, opt);
         }
 
@@ -199,7 +207,7 @@ void control_end(struct GameData* g, struct Cursor* cursor, struct Options* opt)
 void control_ingame(struct GameData* g, struct Cursor* cursor, struct Options* opt)
 {
     static axis = 0;
-    struct Actor* player = g->Actors+0; // same as &g->Actors[0]
+    struct Actor* player = g->Actors+0; /* same as &g->Actors[0]*/
     
     player->x_vel = 0;
     player->y_vel = 0;
@@ -250,6 +258,9 @@ void control_ingame(struct GameData* g, struct Cursor* cursor, struct Options* o
 
     else if(KEY_WAS_HIT(KEY_ESC))
     {
+        minutes = 0;
+        seconds = 0;
+        close_speaker();
         g->game_state = GAME_MENU;
         opt->menu_status = MENU_MAIN;
         change_menu(opt, cursor);
@@ -282,10 +293,10 @@ void get_keyboard()
     while (g_Input->kb_head != g_Input->kb_tail)
     {
         key_scan = g_Input->kb_queue[g_Input->kb_head++];
-        //handle special keys, but only if a second scancode follows
+        /* handle special keys, but only if a second scancode follows*/
         if (key_scan == KEY_SPECIAL_CODE)
                 extended = 128;
-        // remember the release flag before clearing it
+        /* remember the release flag before clearing it*/
         released = key_scan & KEY_RELEASED_FLAG;
         key_scan &= ~KEY_RELEASED_FLAG;
         if (released)

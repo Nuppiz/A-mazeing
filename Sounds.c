@@ -1,9 +1,12 @@
 #include "Shared.h"
 #include "Sounds.h"
 
-int8_t note_i;
+int8_t note_i = 0;
 uint8_t song_i;
 uint16_t notes[11] = {277, 294, 311, 330, 349, 370, 392, 415, 440, 466, 494};
+
+extern uint32_t timer;
+uint32_t last_note = 0;
 
 void init_speaker()
 {
@@ -29,6 +32,15 @@ void play_note(int freq, int note_length)
     delay(note_length); // wait for a bit
 
     close_speaker();
+}
+
+void test_note(uint16_t freq)
+{
+    uint16_t counter;
+
+    counter = (PIT_FREQ / freq); // calculate frequency
+    outportb(0x42, counter & 0xff); // LSB
+    outportb(0x42, counter >> 8); // MSB
 }
 
 void note_loop_up(int note_length, int min_freq, int max_freq)
@@ -69,9 +81,8 @@ void note_loop_down(int note_length, int max_freq, int min_freq)
 
 void play_song()
 {
-
     init_speaker();
-    play_note(notes[note_i], 25);
+    play_note(notes[note_i], AUDIO_INTERVAL);
     if (song_i < 10)
     {
         note_i++;
@@ -85,6 +96,28 @@ void play_song()
     if (song_i >= 20)
         song_i = 0;
     close_speaker();
+}
+
+void test_song(note_sequence* current_sequence)
+{
+    if (current_sequence != NULL)
+    {
+        if (last_note + current_sequence->notes[note_i].length < timer && current_sequence->notes[note_i].frequency != 0)
+        {
+            init_speaker();
+            if (note_i >= (current_sequence->num_notes-1))
+            {
+                note_i = 0;
+                close_speaker();
+            }
+            else
+            {
+                last_note = timer;
+                test_note(current_sequence->notes[note_i].frequency);
+                note_i++;
+            }
+        }
+    }
 }
 
 void end_song()

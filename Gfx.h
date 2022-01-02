@@ -1,12 +1,11 @@
-#ifndef FUNCTIONS_H_INCLUDED
-#define FUNCTIONS_H_INCLUDED
+#ifndef GFX_H
+#define GFX_H
 
 #define VIDEO_INT           0x10      /* the BIOS video interrupt. */
 #define WRITE_DOT           0x0C      /* BIOS func to plot a pixel. */
 #define SET_MODE            0x00      /* BIOS func to set the video mode. */
 #define EGA_16_COLOR_MODE   0xD
 
-#define SCREEN_SIZE         64000
 #define NUM_COLORS          256        /* number of colors in VGA */
 
 #define TILE_AREA           TILE_WIDTH*TILE_HEIGHT

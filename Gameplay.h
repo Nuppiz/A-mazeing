@@ -1,5 +1,5 @@
-#ifndef FUNCTIONS_H_INCLUDED
-#define FUNCTIONS_H_INCLUDED
+#ifndef GAMEPLAY_H
+#define GAMEPLAY_H
 
 #define ACTOR_ON_TILE(a, tile)  g->tile_data[a->y * g->level_width + a->x] == tile
 

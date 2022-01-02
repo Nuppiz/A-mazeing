@@ -1,7 +1,7 @@
-#ifndef FUNCTIONS_H_INCLUDED
-#define FUNCTIONS_H_INCLUDED
+#ifndef LVLLOAD_H
+#define LVLLOAD_H
 
 void level_loader();
 void next_level();
 
-#endif
+#endif /* LVLLOAD_H */

@@ -4,12 +4,16 @@
 // globals
 uint8_t far *VGA=(uint8_t *)0xA0000000L;        /* this points to video memory. */
 uint8_t far screen_buf [64000]; // double buffer
+uint8_t minutes = 0;
+uint16_t seconds = 0;
 
 union REGS regs;
 
 extern struct GameData g;
 extern struct Cursor cursor;
 extern struct Options opt;
+extern uint32_t timer;
+extern int secdiv;
 
 // reserve memory for sprites
 uint8_t far menu_bground [64000];
@@ -558,11 +562,11 @@ void render_menu_text(struct Options* opt, struct Cursor* cursor)
     }
     else if(opt->menu_status == MENU_STORY)
     {
-        render_text(200, 185, "VER. 0.0016A", 0); 
+        render_text(200, 185, "VER. 0.0019A", 0); 
         typewriter(opt, 4, 52, story_text, 15);
     }
 
-    render_text(200, 185, "VER. 0.0016A", 0);    
+    render_text(200, 185, "VER. 0.0019A", 0);    
 }
 
 void draw_help_contents(struct GameData* g)
@@ -654,6 +658,26 @@ void debug_screen_d()
     draw_rectangle(61, 19, 198, 10, 0);
 }
 
+void render_time()
+{
+    char time_str[12];
+    uint8_t r_seconds;
+
+    seconds = timer / secdiv; // actual seconds passed
+    r_seconds = seconds - minutes * 60; // rendered seconds
+
+    if (r_seconds >= 60)
+    {
+        minutes++;
+        sprintf(time_str, "TIME: %d:0", minutes);
+    }
+    else
+        sprintf(time_str, "TIME: %d:%d", minutes, r_seconds);
+        
+    draw_rectangle(270, 185, 50, 8, 0);
+    render_text(210, 185, time_str, 15);
+}
+
 void render(struct GameData* g, struct Cursor* cursor, struct Options* opt)
 {        
     // in case playing, just died, or exited
@@ -662,6 +686,7 @@ void render(struct GameData* g, struct Cursor* cursor, struct Options* opt)
         g->game_state == GAME_OVER ||
         g->game_state == GAME_WIN)
     {
+        render_time();
         render_actors(g);
         if (g->Actors[0].type == ACTOR_EXPLO)
             anim_explosion(g);
@@ -677,5 +702,7 @@ void render(struct GameData* g, struct Cursor* cursor, struct Options* opt)
     {
         render_end();
     }
+    
+    vretrace(&g, &cursor, &opt);
     memcpy(VGA,screen_buf,SCREEN_SIZE);
 }

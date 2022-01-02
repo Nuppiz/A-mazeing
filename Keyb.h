@@ -1,5 +1,5 @@
-#ifndef FUNCTIONS_H_INCLUDED
-#define FUNCTIONS_H_INCLUDED
+#ifndef KEYB_H
+#define KEYB_H
 
 #define KB_ARRAY_LENGTH     256
 #define KB_QUEUE_LENGTH     256

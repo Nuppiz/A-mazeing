@@ -7,9 +7,40 @@
 #include "Sounds.h"
 
 uint16_t *clock=(uint16_t *)0x0000046C;    /* this points to the 18.2hz system clock. */
-int vrets = 0;
-int vretlen = 0;
-float t1;
+uint32_t vretlen = 0;
+uint32_t secdiv = 0;
+uint32_t timer = 0;
+
+note test_music_notes[21] =
+{
+    {277, 100},
+    {294, 200},
+    {311, 100},
+    {330, 200},
+    {349, 100},
+    {370, 200},
+    {392, 100},
+    {415, 200},
+    {440, 100},
+    {466, 200},
+    {494, 100},
+    {466, 200},
+    {440, 100},
+    {415, 200},
+    {392, 100},
+    {370, 200},
+    {349, 100},
+    {330, 200},
+    {311, 100},
+    {294, 200},
+    {277, 100},
+};
+
+note_sequence test_music =
+{
+    test_music_notes,
+    21
+};
 
 void init_gamedata(struct GameData* g, struct Cursor* cursor, struct Options* opt)
 {
@@ -30,8 +61,18 @@ void init_gamedata(struct GameData* g, struct Cursor* cursor, struct Options* op
     opt->music_on = 1;
 }
 
-void wait_for_retrace()
+void vretrace_test()
 {
+    /* wait until done with vertical retrace */
+    while  ((inp(INPUT_STATUS) & VRETRACE));
+    /* wait until done refreshing */
+    while (!(inp(INPUT_STATUS) & VRETRACE));
+}
+
+void vretrace()
+{
+    timer += vretlen;
+
     /* wait until done with vertical retrace */
     while  ((inp(INPUT_STATUS) & VRETRACE));
     /* wait until done refreshing */
@@ -42,14 +83,17 @@ void init_clock()
 {
     /* calculates the time (in milliseconds) for one vertical retrace */
     uint16_t start = *clock;
+    float vrets = 0;
+    float t1;
 
     while (t1 < 1.0)
     {
-        wait_for_retrace();
+        vretrace_test();
         vrets++;
         t1=(*clock-start)/18.2;
     }
     vretlen = t1 / vrets * 1000;
+    secdiv = vrets + 50;
 }
 
 void init(struct GameData* g, struct Cursor* cursor, struct Options* opt)
@@ -99,12 +143,14 @@ void quit()
 
 void main()
 {
+    uint32_t last_logic = 0;
+    uint32_t last_audio = 0;
+    uint32_t last_video = 0;
+    
     /* game options and menu "status" struct */
     struct Options opt;
-
     /* local variables all inside GameData struct called g */
     struct GameData g;
-
     /* cursor location inside a struct so it can easily be accessed everywhere */
     struct Cursor cursor;
     
@@ -114,16 +160,24 @@ void main()
     /* run game, get keyboard state first */
     while (g.game_running == 1)
     {
-        process_input(&g, &cursor, &opt);
-        game_logic(&g, &cursor, &opt);
-        render(&g, &cursor, &opt);
-        if (opt.music_on == 1 && g.game_state != GAME_MENU)
+
+        if (last_logic + LOGIC_INTERVAL < timer)
         {
-            play_song();
-            delay(75);
+            last_logic = timer;
+            process_input(&g, &cursor, &opt);
+            game_logic(&g, &cursor, &opt);
+        }
+
+        if (opt.music_on == 1 && g.game_state != GAME_MENU)
+            test_song(&test_music);
+
+        if (last_video + RENDER_INTERVAL < timer)
+        {
+            last_video = timer;
+            render(&g, &cursor, &opt);
         }
         else
-            delay(100);
+            vretrace();
     }
     
     /* quit */

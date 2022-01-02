@@ -1,3 +1,6 @@
+#ifndef SHARED_H
+#define SHARED_H
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -47,6 +50,12 @@
 #define MAP_EXIT           101
 #define MAP_KEY            42
 #define MAP_MINE           94
+
+#define LOGIC_INTERVAL     100
+#define RENDER_INTERVAL    33
+#define AUDIO_INTERVAL     75
+
+#define SCREEN_SIZE         64000
 
 #define TICKS               (*(volatile unsigned long far *)(0x0040006CL))
 
@@ -140,3 +149,6 @@ enum ANIMS
     SPR_EXPLO,
     NUM_ANIMS
 };
+
+
+#endif /* SHARED_H */

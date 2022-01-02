@@ -1,6 +1,6 @@
-#ifndef FUNCTIONS_H_INCLUDED
-#define FUNCTIONS_H_INCLUDED
+#ifndef MENUS_H
+#define MENUS_H
 
 void menu_controller();
 
-#endif
+#endif /* MENUS_H */
