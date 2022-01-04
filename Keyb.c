@@ -143,7 +143,7 @@ void control_menu(struct GameData* g, struct Cursor* cursor, struct Options* opt
     {
         if (KEY_WAS_HIT(KEY_ENTER))
         {
-            if (opt->sfx_on == 1)
+            if (opt->sfx_on == TRUE)
             {
                 play_note(100, 10);
             }
@@ -158,14 +158,14 @@ void control_menu(struct GameData* g, struct Cursor* cursor, struct Options* opt
 
         else if (KEY_WAS_HIT(KEY_UP))
         {
-            if (opt->sfx_on == 1)
+            if (opt->sfx_on == TRUE)
                 play_note(600, 10);
             cursor_up(cursor, opt, max_choices, choice_spacing);
         }
 
         else if (KEY_WAS_HIT(KEY_DOWN))
         {
-            if (opt->sfx_on == 1)
+            if (opt->sfx_on == TRUE)
                 play_note(600, 10);
             cursor_down(cursor, opt, max_choices, choice_spacing);
         }
@@ -246,13 +246,13 @@ void control_ingame(struct GameData* g, struct Cursor* cursor, struct Options* o
     // Misc
     if (KEY_WAS_HIT(KEY_Q) && KEY_WAS_HIT(KEY_BACKSPACE) && opt->debugmode == 0)
     {
-        opt->debugmode = 1;
+        opt->debugmode = TRUE;
         debug_screen_e();
     }
     
     else if (KEY_WAS_HIT(KEY_Q) && KEY_WAS_HIT(KEY_BACKSPACE) && opt->debugmode == 1)
     {
-        opt->debugmode = 0;
+        opt->debugmode = FALSE;
         debug_screen_d();
     }
 
@@ -268,7 +268,7 @@ void control_ingame(struct GameData* g, struct Cursor* cursor, struct Options* o
         cursor->selection = 0;
     }
     
-    if (opt->debugmode == 1)
+    if (opt->debugmode == TRUE)
     {
         if (KEY_WAS_HIT(KEY_K))
             add_key(g);
@@ -331,7 +331,7 @@ void process_input(struct GameData* g, struct Cursor* cursor, struct Options* op
     
     // F10 always exits, wherever you are
     if (KEY_WAS_HIT(KEY_F10))
-        g->game_running = 0;
+        g->game_running = FALSE;
 
     clear_keys();
 }

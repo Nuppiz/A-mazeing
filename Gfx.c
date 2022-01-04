@@ -549,14 +549,14 @@ void render_menu_text(struct Options* opt, struct Cursor* cursor)
     {
         cursor->x = 91;
         render_text(111, 65, "SOUNDS", 15);
-        if (opt->sfx_on == 1)
+        if (opt->sfx_on == TRUE)
             render_text(191, 65, "ON", 15);
-        else if (opt->sfx_on == 0)
+        else if (opt->sfx_on == FALSE)
             render_text(191, 65, "OFF", 15);
         render_text(111, 105, "MUSIC", 15);
-        if (opt->music_on == 1)
+        if (opt->music_on == TRUE)
             render_text(191, 105, "ON", 15);
-        else if (opt->music_on == 0)
+        else if (opt->music_on == FALSE)
             render_text(191, 105, "OFF", 15);
         render_text(111, 145, "KEY CONFIG", 15);
     }

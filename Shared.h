@@ -15,6 +15,9 @@
 #define INPUT_STATUS        0x03da
 #define VRETRACE            0x08
 
+#define FALSE               0
+#define TRUE                1
+
 #define TILE_WIDTH          8
 #define TILE_HEIGHT         8
 

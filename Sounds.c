@@ -1,7 +1,9 @@
 #include "Shared.h"
-#include "Sounds.h"
+#include "Music.h"
 
-int8_t note_i = 0;
+#define PIT_FREQ            0x1234DD /* programmable interveral timer (PIT) frequency for PC speaker */
+
+uint16_t note_i = 0;
 uint8_t song_i;
 uint16_t notes[11] = {277, 294, 311, 330, 349, 370, 392, 415, 440, 466, 494};
 
@@ -98,22 +100,31 @@ void play_song()
     close_speaker();
 }
 
-void test_song(note_sequence* current_sequence)
+void test_song()
 {
+    note_sequence* current_sequence = &Doom_music;
+
     if (current_sequence != NULL)
     {
-        if (last_note + current_sequence->notes[note_i].length < timer && current_sequence->notes[note_i].frequency != 0)
+        if (last_note + current_sequence->duration[note_i]*15 < timer)
         {
             init_speaker();
-            if (note_i >= (current_sequence->num_notes-1))
+            if (note_i >= Doom_size)
             {
                 note_i = 0;
-                close_speaker();
+                if (current_sequence->loop == FALSE)
+                {
+                    current_sequence = NULL;
+                    close_speaker();
+                }
             }
             else
             {
                 last_note = timer;
-                test_note(current_sequence->notes[note_i].frequency);
+                if (current_sequence->notes[note_i] != 0)
+                    test_note(current_sequence->notes[note_i]);
+                else
+                    close_speaker();
                 note_i++;
             }
         }

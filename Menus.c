@@ -28,26 +28,26 @@ void selections_main(struct GameData* g, struct Cursor* cursor, struct Options* 
         change_menu(opt, cursor);
     }
     else if (cursor->selection == 4)
-        g->game_running = 0;
+        g->game_running = FALSE;
 }
 
 void selections_options(struct Cursor* cursor, struct Options* opt)
 {
     if (cursor->selection == 0)
     {
-        if (opt->sfx_on == 1)
-            opt->sfx_on = 0;
+        if (opt->sfx_on == TRUE)
+            opt->sfx_on = FALSE;
         else
-            opt->sfx_on = 1;
+            opt->sfx_on = TRUE;
         change_menu(opt, cursor); // optimize later
         render_menu_text(cursor, opt);
     }
     else if (cursor->selection == 1)
     {
-        if (opt->music_on == 1)
-            opt->music_on = 0;
+        if (opt->music_on == TRUE)
+            opt->music_on = FALSE;
         else
-            opt->music_on = 1;
+            opt->music_on = TRUE;
         change_menu(opt, cursor); // optimize later
         render_menu_text(cursor, opt);
     }

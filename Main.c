@@ -11,37 +11,6 @@ uint32_t vretlen = 0;
 uint32_t secdiv = 0;
 uint32_t timer = 0;
 
-note test_music_notes[21] =
-{
-    {277, 100},
-    {294, 200},
-    {311, 100},
-    {330, 200},
-    {349, 100},
-    {370, 200},
-    {392, 100},
-    {415, 200},
-    {440, 100},
-    {466, 200},
-    {494, 100},
-    {466, 200},
-    {440, 100},
-    {415, 200},
-    {392, 100},
-    {370, 200},
-    {349, 100},
-    {330, 200},
-    {311, 100},
-    {294, 200},
-    {277, 100},
-};
-
-note_sequence test_music =
-{
-    test_music_notes,
-    21
-};
-
 void init_gamedata(struct GameData* g, struct Cursor* cursor, struct Options* opt)
 {
     /* init game data */
@@ -56,9 +25,9 @@ void init_gamedata(struct GameData* g, struct Cursor* cursor, struct Options* op
 
     /* init options */
     opt->menu_status = MENU_MAIN;
-    opt->debugmode = 0;
-    opt->sfx_on = 1;
-    opt->music_on = 1;
+    opt->debugmode = FALSE;
+    opt->sfx_on = TRUE;
+    opt->music_on = TRUE;
 }
 
 void vretrace_test()
@@ -112,7 +81,7 @@ void init(struct GameData* g, struct Cursor* cursor, struct Options* opt)
 
     /* init gamedata */
     init_gamedata(g, cursor, opt);
-    g->game_running = 1;
+    g->game_running = TRUE;
     g->game_state = GAME_MENU;
     change_menu(opt, cursor);
 
@@ -137,6 +106,7 @@ void init(struct GameData* g, struct Cursor* cursor, struct Options* opt)
 
 void quit()
 {
+    close_speaker();
     deinit_keyboard();
     set_mode(TEXT_MODE);
 }
@@ -144,7 +114,7 @@ void quit()
 void main()
 {
     uint32_t last_logic = 0;
-    uint32_t last_audio = 0;
+    //uint32_t last_audio = 0;
     uint32_t last_video = 0;
     
     /* game options and menu "status" struct */
@@ -158,7 +128,7 @@ void main()
     init(&g, &cursor, &opt);
 
     /* run game, get keyboard state first */
-    while (g.game_running == 1)
+    while (g.game_running == TRUE)
     {
 
         if (last_logic + LOGIC_INTERVAL < timer)
@@ -168,8 +138,8 @@ void main()
             game_logic(&g, &cursor, &opt);
         }
 
-        if (opt.music_on == 1 && g.game_state != GAME_MENU)
-            test_song(&test_music);
+        if (opt.music_on == TRUE && g.game_state != GAME_MENU)
+            test_song();
 
         if (last_video + RENDER_INTERVAL < timer)
         {
