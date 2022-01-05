@@ -14,6 +14,7 @@ void start_game(struct GameData* g, struct Options* opt)
     g->level_num = 1;
     g->player_lives = 3;
     level_loader(g);
+    music_track_select(g);
 }
 
 void player_death(struct GameData* g, struct Options* opt)
@@ -246,17 +247,8 @@ void check_state(struct GameData* g, struct Options* opt, struct Cursor* cursor)
     {
         if (opt->music_on == 1)
         {
-            end_song();
-            delay(100);
+            music_track_select(g);
         }
-        else
-            delay(1500);
-        
-        g->game_state = GAME_MENU;
-        opt->menu_status = MENU_MAIN;
-        change_menu(opt, cursor);
-        cursor->new_y = 65;
-        cursor->selection = 0;
     }
 }
 

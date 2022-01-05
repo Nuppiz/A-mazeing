@@ -9,6 +9,7 @@ extern struct Options opt;
 extern uint8_t minutes;
 extern uint16_t seconds;
 extern uint16_t timer;
+extern uint16_t note_i;
 
 Input_t Input = {0};
 Input_t* g_Input = &Input;
@@ -196,6 +197,10 @@ void control_end(struct GameData* g, struct Cursor* cursor, struct Options* opt)
 {
     if (KEY_WAS_HIT(KEY_SPACE))
     {
+        close_speaker();
+        minutes = 0;
+        seconds = 0;
+        note_i = 0;
         g->game_state = GAME_MENU;
         opt->menu_status = MENU_MAIN;
         change_menu(opt, cursor);
@@ -260,6 +265,7 @@ void control_ingame(struct GameData* g, struct Cursor* cursor, struct Options* o
     {
         minutes = 0;
         seconds = 0;
+        note_i = 0;
         close_speaker();
         g->game_state = GAME_MENU;
         opt->menu_status = MENU_MAIN;

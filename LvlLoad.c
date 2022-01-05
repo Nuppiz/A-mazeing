@@ -5,6 +5,8 @@ extern struct GameData g;
 extern struct Sprite player_sprite;
 extern struct Sprite guard_sprite;
 
+extern uint16_t note_i;
+
 void level_loader(struct GameData* g)
 {
     FILE* level_file;
@@ -115,4 +117,6 @@ void next_level(struct GameData* g)
     g->level_num++;
     fill_screen(0);
     level_loader(g);
+    music_track_select(g);
+    note_i = 0;
 }

@@ -11,6 +11,8 @@ uint32_t vretlen = 0;
 uint32_t secdiv = 0;
 uint32_t timer = 0;
 
+extern uint16_t note_i;
+
 void init_gamedata(struct GameData* g, struct Cursor* cursor, struct Options* opt)
 {
     /* init game data */
@@ -28,6 +30,8 @@ void init_gamedata(struct GameData* g, struct Cursor* cursor, struct Options* op
     opt->debugmode = FALSE;
     opt->sfx_on = TRUE;
     opt->music_on = TRUE;
+
+    note_i = 0;
 }
 
 void vretrace_test()
@@ -102,6 +106,8 @@ void init(struct GameData* g, struct Cursor* cursor, struct Options* opt)
 
     printf("OK!\n");
     delay(200);
+
+    init_music();
 }
 
 void quit()
@@ -139,7 +145,7 @@ void main()
         }
 
         if (opt.music_on == TRUE && g.game_state != GAME_MENU)
-            test_song();
+            play_sequence();
 
         if (last_video + RENDER_INTERVAL < timer)
         {

@@ -34,7 +34,7 @@ void init_keyboard();
 void init_default_keys();
 int initInput();
 void deinit_keyboard();
-void cursor_uo();
+void cursor_up();
 void cursor_down();
 void control_menu();
 void control_end();

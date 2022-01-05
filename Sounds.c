@@ -3,12 +3,24 @@
 
 #define PIT_FREQ            0x1234DD /* programmable interveral timer (PIT) frequency for PC speaker */
 
-uint16_t note_i = 0;
-uint8_t song_i;
+int16_t note_i = 0;
+uint8_t song_i = 0;
 uint16_t notes[11] = {277, 294, 311, 330, 349, 370, 392, 415, 440, 466, 494};
+
+note_sequence* current_sequence;
 
 extern uint32_t timer;
 uint32_t last_note = 0;
+char song_name [11];
+
+void init_music()
+{
+    /* initialize music files */
+    mario_music.size = MarioUW_size;
+    Doom_music.size = Doom_size;
+    SW_music.size = SW_size;
+    Odetojoy_music.size = Odetojoy_size;
+}
 
 void init_speaker()
 {
@@ -36,7 +48,7 @@ void play_note(int freq, int note_length)
     close_speaker();
 }
 
-void test_note(uint16_t freq)
+void sequence_note(uint16_t freq)
 {
     uint16_t counter;
 
@@ -81,35 +93,44 @@ void note_loop_down(int note_length, int max_freq, int min_freq)
     close_speaker();
 }
 
-void play_song()
+void loop_song()
 {
     init_speaker();
-    play_note(notes[note_i], AUDIO_INTERVAL);
-    if (song_i < 10)
+    for (note_i = 0; note_i < 10; note_i++);
     {
-        note_i++;
-        song_i++;
+        play_note(notes[note_i], AUDIO_INTERVAL);
     }
-    else if (song_i >= 10 && song_i < 20)
+    for (note_i = 10; note_i > -1; note_i--);
     {
-        note_i--;
-        song_i++;
+        play_note(notes[note_i], AUDIO_INTERVAL);
     }
-    if (song_i >= 20)
-        song_i = 0;
     close_speaker();
 }
 
-void test_song()
+void music_track_select(struct GameData* g)
 {
-    note_sequence* current_sequence = &Doom_music;
+    if(g->game_state == GAME_INGAME)
+    {
+        switch (g->level_num)
+        {
+            case 1:   current_sequence = MUSIC_LVL1;  break;
+            case 2:   current_sequence = MUSIC_LVL2;  break;
+            case 3:   current_sequence = MUSIC_LVL3;  break;
+            default:  current_sequence = MUSIC_LVL1;  break;
+        }
+    }
+    else if (g->game_state == GAME_END)
+        current_sequence = MUSIC_WIN;
+}
 
+void play_sequence()
+{
     if (current_sequence != NULL)
     {
-        if (last_note + current_sequence->duration[note_i]*15 < timer)
+        if (last_note + current_sequence->duration[note_i] * 15 < timer)
         {
             init_speaker();
-            if (note_i >= Doom_size)
+            if (note_i >= current_sequence->size)
             {
                 note_i = 0;
                 if (current_sequence->loop == FALSE)
@@ -122,7 +143,7 @@ void test_song()
             {
                 last_note = timer;
                 if (current_sequence->notes[note_i] != 0)
-                    test_note(current_sequence->notes[note_i]);
+                    sequence_note(current_sequence->notes[note_i]);
                 else
                     close_speaker();
                 note_i++;
@@ -141,25 +162,18 @@ void end_song()
 void sound_gameover()
 {
     init_speaker();
-    play_note(600, 200);
-    close_speaker();
-    delay(250);
-    init_speaker();
-    play_note(400, 200);
-    close_speaker();
-    delay(250);
-    init_speaker();
-    play_note(300, 300);
-    close_speaker();
-    delay(100);
-    init_speaker();
-    play_note(200, 200);
-    play_note(250, 200);
-    play_note(200, 200);
-    play_note(225, 350);
-    play_note(250, 350);
-    play_note(200, 350);
-    play_note(150, 1000);
+    play_note(NOTE_C5, 360 * 2);
+    play_note(NOTE_G4, 360 * 2);
+    play_note(NOTE_E4, 240 * 2);
+    play_note(NOTE_A4, 180 * 2);
+    play_note(NOTE_B4, 180 * 2);
+    play_note(NOTE_A4, 180 * 2);
+    play_note(NOTE_GS4, 180 * 2);
+    play_note(NOTE_AS4, 180 * 2);
+    play_note(NOTE_GS4, 180 * 2);
+    play_note(NOTE_G4, 120 * 2);
+    play_note(NOTE_D4, 120 * 2);
+    play_note(NOTE_E4, 720 * 2);
     close_speaker();
 }
 
