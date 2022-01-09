@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <dos.h>
+#include "Watcom.h"
 
 #define VGA_256_COLOR_MODE  0x13      /* use to set 256-color mode. */
 #define TEXT_MODE           0x03      /* use to set 80x25 text mode. */

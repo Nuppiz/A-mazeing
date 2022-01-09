@@ -16,12 +16,11 @@ extern uint32_t timer;
 extern int secdiv;
 
 // reserve memory for sprites
-uint8_t far menu_bground [64000];
 uint8_t alphabet [4240];
 uint8_t sprites[NUM_SPRITES][TILE_AREA];
 uint8_t temp_tile [64];
 
-uint8_t* gfx_table[256];
+uint8_t* gfx_table[128];
 
 char bgfilename [13];
 
@@ -37,7 +36,6 @@ struct Sprite explo_sprite = {anims[SPR_EXPLO], 8, 8, 64, 3, 0};
 
 void set_tile_gfx()
 {
-    _fmemset(gfx_table, SPR_ERROR, 256);
     gfx_table['W'] = sprites[TILE_WALL];
     gfx_table['-'] = sprites[TILE_FLOOR];
     gfx_table['e'] = sprites[TILE_EXIT];
@@ -603,9 +601,7 @@ void change_menu(struct Options* opt, struct Cursor* cursor)
     else
         bgfilename = "GFX/SPLASH.7UP";
 
-    load_gfx(bgfilename, menu_bground, 64000);
-
-    draw_big(0, 0, 320, 200, menu_bground);
+    load_gfx(bgfilename, screen_buf, 64000);
 
     render_menu_text(opt, cursor);
 }
