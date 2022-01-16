@@ -10,6 +10,7 @@ uint16_t notes[11] = {277, 294, 311, 330, 349, 370, 392, 415, 440, 466, 494};
 note_sequence* current_sequence;
 note_sequence* prev_sequence;
 
+extern struct Options opt;
 extern uint32_t timer;
 uint32_t last_note = 0;
 uint32_t last_effect = 0;
@@ -125,25 +126,27 @@ void music_track_select(struct GameData* g)
         current_sequence = MUSIC_WIN;
 }
 
-void switch_to_effect(uint8_t type)
+void switch_to_effect(uint8_t effect)
 {
-    prev_sequence = current_sequence;
+        if (current_sequence->type == SEQ_MUSIC) // prevent overwriting the music track
+            prev_sequence = current_sequence;
 
-    switch (type)
-    {
-        case 1:   current_sequence = &explosion;  break;
-        case 2:   current_sequence = &pickup;  break;
-        case 3:   current_sequence = &door_open;  break;
-        case 4:   current_sequence = &door_shut;  break;
-        default:  current_sequence = prev_sequence;  break;
-    }
+        switch (effect)
+        {
+            case 1:   current_sequence = &explosion;  break;
+            case 2:   current_sequence = &pickup;  break;
+            case 3:   current_sequence = &door_open;  break;
+            case 4:   current_sequence = &door_shut;  break;
+            default:  current_sequence = prev_sequence;  break;
+        }
+        note_i = 0;
 }
 
-void play_sequence()
+void play_sequence(struct Options* opt)
 {
     if (current_sequence != NULL)
     {
-        if (current_sequence->type == 0)
+        if (current_sequence->type == SEQ_MUSIC && opt->music_on == TRUE)
         {
             if (last_note + current_sequence->duration[song_i] * 15 < timer)
             {
@@ -168,7 +171,7 @@ void play_sequence()
                 }
             }
         }
-        else
+        else if (current_sequence->type == SEQ_EFFECT && opt->sfx_on == TRUE)
         {
             if (last_effect + current_sequence->duration[note_i] * 15 < timer)
             {
@@ -176,6 +179,7 @@ void play_sequence()
                 if (note_i >= current_sequence->size)
                 {
                     note_i = 0;
+                    close_speaker();
                     current_sequence = prev_sequence;
                 }
                 else

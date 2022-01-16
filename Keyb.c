@@ -176,9 +176,9 @@ void control_menu(struct GameData* g, struct Cursor* cursor, struct Options* opt
     {
         if (opt->menu_status != MENU_MAIN && opt->menu_status != MENU_KEYCONF)
         {
-            opt->menu_status = MENU_MAIN;
             cursor->new_y = cursor->old_y;
             cursor->selection = cursor->old_selection;
+            opt->menu_status = MENU_MAIN;
             change_menu(opt, cursor);
         }
         else if (opt->menu_status == MENU_KEYCONF)
@@ -277,9 +277,9 @@ void control_ingame(struct GameData* g, struct Cursor* cursor, struct Options* o
     if (opt->debugmode == TRUE)
     {
         if (KEY_WAS_HIT(KEY_K))
-            add_key(g);
+            add_key(g, opt);
         else if (KEY_WAS_HIT(KEY_L))
-            add_life(g);
+            add_life(g, opt);
         else if (KEY_WAS_HIT(KEY_D))
             remove_life(g);
         else if (KEY_WAS_HIT(KEY_S))

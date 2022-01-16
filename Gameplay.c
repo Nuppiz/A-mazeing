@@ -60,10 +60,11 @@ void remove_key(struct GameData* g)
         render_stats(g);
 }
 
-void add_life(struct GameData* g)
+void add_life(struct GameData* g, struct Options* opt)
 {
     g->player_lives++;
-    switch_to_effect(2);
+    if (opt->sfx_on == 1)
+        switch_to_effect(2);
     draw_rectangle(300, 1, 18, 8, 0);
     if (g->level_height > 23)
         render_maze(g);
@@ -217,7 +218,7 @@ void check_state(struct GameData* g, struct Options* opt, struct Cursor* cursor)
     if (g->game_state == GAME_OVER)
     {
         gameover_screen();
-        if (opt->sfx_on == 1)
+        if (opt->music_on == 1)
         {
             sound_gameover();
             delay(1000);

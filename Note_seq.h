@@ -8,6 +8,9 @@
 #define MUSIC_LVL3    &SW_music
 #define MUSIC_WIN     &Odetojoy_music
 
+#define SEQ_MUSIC    0
+#define SEQ_EFFECT   1
+
 #define PITCH_INTERVAL  10
 
 //##############**"Mario underworld" **##############//
@@ -415,7 +418,7 @@ note_sequence mario_music =
     0,
     0,
     TRUE,
-    0
+    SEQ_MUSIC
 };
 
 note_sequence Doom_music =
@@ -425,7 +428,7 @@ note_sequence Doom_music =
     0,
     0,
     TRUE,
-    0
+    SEQ_MUSIC
 };
 
 note_sequence SW_music =
@@ -435,7 +438,7 @@ note_sequence SW_music =
     0,
     0,
     TRUE,
-    0
+    SEQ_MUSIC
 };
 
 note_sequence Odetojoy_music =
@@ -445,7 +448,7 @@ note_sequence Odetojoy_music =
     0,
     0,
     FALSE,
-    0
+    SEQ_MUSIC
 };
 
 note_sequence explosion =
@@ -455,7 +458,7 @@ note_sequence explosion =
     8,
     10,
     FALSE,
-    1
+    SEQ_EFFECT
 };
 
 note_sequence pickup =
@@ -465,7 +468,7 @@ note_sequence pickup =
     5,
     10,
     FALSE,
-    1
+    SEQ_EFFECT
 };
 
 note_sequence door_open =
@@ -475,7 +478,7 @@ note_sequence door_open =
     3,
     10,
     FALSE,
-    1
+    SEQ_EFFECT
 };
 
 note_sequence door_shut =
@@ -485,7 +488,7 @@ note_sequence door_shut =
     1,
     10,
     FALSE,
-    1
+    SEQ_EFFECT
 };
 
 #endif /* NOTE_SEQ_H */

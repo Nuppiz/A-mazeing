@@ -144,8 +144,8 @@ void main()
             game_logic(&g, &cursor, &opt);
         }
 
-        if (opt.music_on == TRUE && g.game_state != GAME_MENU)
-            play_sequence();
+        if (g.game_state != GAME_MENU)
+            play_sequence(&opt);
 
         if (last_video + RENDER_INTERVAL < timer)
         {
