@@ -1,5 +1,5 @@
-#ifndef MUSIC_H
-#define MUSIC_H
+#ifndef NOTE_SEQ_H
+#define NOTE_SEQ_H
 
 #include "Pitches.h"
 
@@ -7,6 +7,8 @@
 #define MUSIC_LVL2    &mario_music
 #define MUSIC_LVL3    &SW_music
 #define MUSIC_WIN     &Odetojoy_music
+
+#define PITCH_INTERVAL  10
 
 //##############**"Mario underworld" **##############//
 int MarioUW_note[] = {
@@ -359,6 +361,38 @@ int Odetojoy_duration[] = {
  
 };
 
+int Explosion_note[] = {
+  NOTE_GS6, NOTE_A6, NOTE_G7, NOTE_GS7, NOTE_GS7, NOTE_G7, NOTE_A6, NOTE_GS6
+};
+
+int Explosion_duration[] = {
+    0, 4, 4, 4, 4, 4, 4, 4, 4
+};
+
+int Pickup_note[] = {
+  NOTE_C5, NOTE_G4, NOTE_C6, 0, NOTE_C6
+};
+
+int Pickup_duration[] = {
+    0, 8, 8, 4, 4, 4
+};
+
+int Door_open_note[] = {
+  NOTE_E5, NOTE_C5, NOTE_C6
+};
+
+int Door_open_duration[] = {
+    0, 8, 8, 4
+};
+
+int Door_shut_note[] = {
+  NOTE_B1, NOTE_A1
+};
+
+int Door_shut_duration[] = {
+    0, 4, 4
+};
+
 int MarioUW_size = sizeof(MarioUW_note)/sizeof(MarioUW_note[0]);
 int Doom_size = sizeof(Doom_note)/sizeof(Doom_note[0]);
 int SW_size = sizeof(SW_note)/sizeof(SW_note[0]);
@@ -369,7 +403,9 @@ typedef struct
     int* notes;
     int* duration;
     int size;
+    int16_t pitch_change;
     uint8_t loop;
+    uint8_t type;
 } note_sequence;
 
 note_sequence mario_music =
@@ -377,7 +413,9 @@ note_sequence mario_music =
     MarioUW_note,
     MarioUW_duration,
     0,
-    TRUE
+    0,
+    TRUE,
+    0
 };
 
 note_sequence Doom_music =
@@ -385,7 +423,9 @@ note_sequence Doom_music =
     Doom_note,
     Doom_duration,
     0,
-    TRUE
+    0,
+    TRUE,
+    0
 };
 
 note_sequence SW_music =
@@ -393,7 +433,9 @@ note_sequence SW_music =
     SW_note,
     SW_duration,
     0,
-    TRUE
+    0,
+    TRUE,
+    0
 };
 
 note_sequence Odetojoy_music =
@@ -401,7 +443,49 @@ note_sequence Odetojoy_music =
     Odetojoy_note,
     Odetojoy_duration,
     0,
-    TRUE
+    0,
+    FALSE,
+    0
 };
 
-#endif /* MUSIC_H */
+note_sequence explosion =
+{
+    Explosion_note,
+    Explosion_duration,
+    8,
+    10,
+    FALSE,
+    1
+};
+
+note_sequence pickup =
+{
+    Pickup_note,
+    Pickup_duration,
+    5,
+    10,
+    FALSE,
+    1
+};
+
+note_sequence door_open =
+{
+    Door_open_note,
+    Door_open_duration,
+    3,
+    10,
+    FALSE,
+    1
+};
+
+note_sequence door_shut =
+{
+    Door_shut_note,
+    Door_shut_duration,
+    1,
+    10,
+    FALSE,
+    1
+};
+
+#endif /* NOTE_SEQ_H */

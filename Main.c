@@ -11,7 +11,7 @@ uint32_t vretlen = 0;
 uint32_t secdiv = 0;
 uint32_t timer = 0;
 
-extern uint16_t note_i;
+extern uint16_t song_i;
 
 void init_gamedata(struct GameData* g, struct Cursor* cursor, struct Options* opt)
 {
@@ -31,7 +31,7 @@ void init_gamedata(struct GameData* g, struct Cursor* cursor, struct Options* op
     opt->sfx_on = TRUE;
     opt->music_on = TRUE;
 
-    note_i = 0;
+    song_i = 0;
 }
 
 void vretrace_test()

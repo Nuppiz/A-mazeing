@@ -3,6 +3,7 @@
 
 extern struct GameData g;
 extern struct Options opt;
+extern uint16_t song_i;
 
 void start_game(struct GameData* g, struct Options* opt)
 {
@@ -27,7 +28,7 @@ void player_death(struct GameData* g, struct Options* opt)
     render(g);
 
     if (opt->sfx_on == 1)
-        sound_death();
+        switch_to_effect(1);
     else
         delay(600);
     
@@ -41,7 +42,7 @@ void add_key(struct GameData* g, struct Options* opt)
 {
     g->keys_acquired++;
     if (opt->sfx_on == 1)
-        sound_key();
+        switch_to_effect(2);
     draw_rectangle(180, 1, 18, 8, 0);
     if (g->level_height > 23)
         render_maze(g);
@@ -62,6 +63,7 @@ void remove_key(struct GameData* g)
 void add_life(struct GameData* g)
 {
     g->player_lives++;
+    switch_to_effect(2);
     draw_rectangle(300, 1, 18, 8, 0);
     if (g->level_height > 23)
         render_maze(g);
@@ -193,7 +195,7 @@ void player_hit_detect(struct GameData* g, struct Options* opt)
             p->x -= p->x_vel;
             p->y -= p->y_vel;
             if (opt->sfx_on == 1)
-                sound_door_c();
+                switch_to_effect(4);;
         }
         // otherwise, we remain in the door tile and change tile to DOOR_O
         else
@@ -202,7 +204,7 @@ void player_hit_detect(struct GameData* g, struct Options* opt)
             SET_TILE(p->x, p->y, MAP_DOOR_O);
             render_door(g, p->x, p->y);
             if (opt->sfx_on == 1)
-                sound_door_o();
+                switch_to_effect(3);
         }
     }
     // exit and win the level
@@ -222,6 +224,7 @@ void check_state(struct GameData* g, struct Options* opt, struct Cursor* cursor)
         }
         else
             delay(3000);
+        song_i = 0;
         g->game_state = GAME_MENU;
         opt->menu_status = MENU_MAIN;
         change_menu(opt, cursor);

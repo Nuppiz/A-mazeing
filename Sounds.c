@@ -1,16 +1,18 @@
 #include "Shared.h"
-#include "Music.h"
+#include "Note_seq.h"
 
 #define PIT_FREQ            0x1234DD /* programmable interveral timer (PIT) frequency for PC speaker */
 
 int16_t note_i = 0;
-uint8_t song_i = 0;
+int16_t song_i = 0;
 uint16_t notes[11] = {277, 294, 311, 330, 349, 370, 392, 415, 440, 466, 494};
 
 note_sequence* current_sequence;
+note_sequence* prev_sequence;
 
 extern uint32_t timer;
 uint32_t last_note = 0;
+uint32_t last_effect = 0;
 char song_name [11];
 
 void init_music()
@@ -123,34 +125,126 @@ void music_track_select(struct GameData* g)
         current_sequence = MUSIC_WIN;
 }
 
+void switch_to_effect(uint8_t type)
+{
+    prev_sequence = current_sequence;
+
+    switch (type)
+    {
+        case 1:   current_sequence = &explosion;  break;
+        case 2:   current_sequence = &pickup;  break;
+        case 3:   current_sequence = &door_open;  break;
+        case 4:   current_sequence = &door_shut;  break;
+        default:  current_sequence = prev_sequence;  break;
+    }
+}
+
 void play_sequence()
 {
     if (current_sequence != NULL)
     {
-        if (last_note + current_sequence->duration[note_i] * 15 < timer)
+        if (current_sequence->type == 0)
+        {
+            if (last_note + current_sequence->duration[song_i] * 15 < timer)
+            {
+                init_speaker();
+                if (song_i >= current_sequence->size)
+                {
+                    song_i = 0;
+                    if (current_sequence->loop == FALSE)
+                    {
+                        current_sequence = NULL;
+                        close_speaker();
+                    }
+                }
+                else
+                {
+                    last_note = timer;
+                    if (current_sequence->notes[song_i] != 0)
+                        sequence_note(current_sequence->notes[song_i]);
+                    else
+                        close_speaker();
+                    song_i++;
+                }
+            }
+        }
+        else
+        {
+            if (last_effect + current_sequence->duration[note_i] * 15 < timer)
+            {
+                init_speaker();
+                if (note_i >= current_sequence->size)
+                {
+                    note_i = 0;
+                    current_sequence = prev_sequence;
+                }
+                else
+                {
+                    last_effect = timer;
+                    if (current_sequence->notes[note_i] != 0)
+                    {
+                        sequence_note(current_sequence->notes[note_i]);
+                    }
+                    else
+                        close_speaker();
+                    note_i++;
+                }
+            }
+        }
+    }
+}
+
+/*void play_effect(uint8_t effect)
+{
+    int seq_i = 0;
+
+    note_sequence* sequence;
+
+    if (effect == 1)
+        sequence = &explosion;
+
+    if (sequence != NULL)
+    {
+        if (last_effect + sequence->duration[seq_i] < timer)
         {
             init_speaker();
-            if (note_i >= current_sequence->size)
+            if (seq_i >= sequence->size)
             {
-                note_i = 0;
-                if (current_sequence->loop == FALSE)
+                seq_i = 0;
+                if (sequence->loop == FALSE)
                 {
-                    current_sequence = NULL;
+                    sequence = NULL;
                     close_speaker();
                 }
             }
             else
             {
-                last_note = timer;
-                if (current_sequence->notes[note_i] != 0)
-                    sequence_note(current_sequence->notes[note_i]);
+                last_effect = timer;
+                if (sequence->notes[seq_i] != 0)
+                {
+                    if (sequence->pitch_change != 0)
+                    {
+                        if (last_pitch_change + PITCH_INTERVAL < timer)
+                        {
+                            sequence_note(sequence->notes[seq_i] + sequence->pitch_change);
+                            last_pitch_change = timer;
+                        }
+                        else
+                        {
+                            sequence_note(sequence->notes[seq_i]);
+                        }
+                    }
+                    else
+                    {
+                        sequence_note(sequence->notes[seq_i]);
+                    }
+                }
                 else
                     close_speaker();
-                note_i++;
             }
         }
     }
-}
+}*/
 
 void end_song()
 {
@@ -162,47 +256,18 @@ void end_song()
 void sound_gameover()
 {
     init_speaker();
-    play_note(NOTE_C5, 360 * 2);
-    play_note(NOTE_G4, 360 * 2);
-    play_note(NOTE_E4, 240 * 2);
-    play_note(NOTE_A4, 180 * 2);
-    play_note(NOTE_B4, 180 * 2);
-    play_note(NOTE_A4, 180 * 2);
-    play_note(NOTE_GS4, 180 * 2);
-    play_note(NOTE_AS4, 180 * 2);
-    play_note(NOTE_GS4, 180 * 2);
-    play_note(NOTE_G4, 120 * 2);
-    play_note(NOTE_D4, 120 * 2);
-    play_note(NOTE_E4, 720 * 2);
-    close_speaker();
-}
-
-void sound_death()
-{
-    init_speaker();
-    note_loop_up(1, 100, 500);
-    note_loop_down(1, 500, 100);
-    close_speaker();
-}
-
-void sound_key()
-{
-    init_speaker();
-    play_note(400, 25);
-    close_speaker();
-}
-
-void sound_door_c()
-{
-    init_speaker();
-    play_note(100, 25);
-    close_speaker();
-}
-
-void sound_door_o()
-{
-    init_speaker();
-    play_note(600, 25);
+    play_note(NOTE_C5, 540);
+    play_note(NOTE_G4, 540);
+    play_note(NOTE_E4, 360);
+    play_note(NOTE_A4, 270);
+    play_note(NOTE_B4, 270);
+    play_note(NOTE_A4, 270);
+    play_note(NOTE_GS4, 270);
+    play_note(NOTE_AS4, 270);
+    play_note(NOTE_GS4, 270);
+    play_note(NOTE_G4, 180);
+    play_note(NOTE_D4, 180);
+    play_note(NOTE_E4, 1000);
     close_speaker();
 }
 

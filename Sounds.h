@@ -8,6 +8,7 @@ void note_loop_up();
 void note_loop_down();
 void loop_song();
 void music_track_select();
+void switch_to_effect();
 void play_sequence();
 void end_song();
 void sound_gameover();
