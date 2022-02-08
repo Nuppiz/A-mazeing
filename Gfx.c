@@ -10,10 +10,12 @@ uint16_t seconds = 0;
 union REGS regs;
 
 extern struct GameData g;
-extern struct Cursor cursor;
-extern struct Options opt;
+extern struct Settings opt;
 extern uint32_t timer;
 extern int secdiv;
+extern Menu_t* current_menu;
+extern Menu_t mainmenu;
+extern Menu_t optionsmenu;
 
 // reserve memory for sprites
 uint8_t alphabet [4240];
@@ -21,12 +23,6 @@ uint8_t sprites[NUM_SPRITES][TILE_AREA];
 uint8_t temp_tile [64];
 
 uint8_t* gfx_table[128];
-
-char bgfilename [13];
-
-uint8_t story_text[] =
-    "I COULD WRITE A FANCY STORY BUT" 
-    "CAN'T BE ARSED RN LOL";
 
 uint8_t anims[NUM_ANIMS][192];
 
@@ -122,14 +118,14 @@ void create_composites()
     composite_sprite(sprites[TILE_FLOOR], sprites[TILE_DOOR_C], sprites[COMP_DOOR_C]);
 }
 
-void draw_sprite(struct GameData* g, int x, int y, uint8_t* sprite)
+void draw_sprite(int x, int y, uint8_t* sprite)
 {
     int index_x = 0;
     int index_y = 0;
     int i = 0;
 
-    x += g->render_offset_x;
-    y += g->render_offset_y;
+    x += g.render_offset_x;
+    y += g.render_offset_y;
 
     for (index_y=0;index_y<TILE_HEIGHT;index_y++)
     {
@@ -171,14 +167,14 @@ void draw_temp(uint8_t* sprite)
     index_y = 0;
 }
 
-void draw_sprite_tr(struct GameData* g, int x, int y, uint8_t* sprite)
+void draw_sprite_tr(int x, int y, uint8_t* sprite)
 {
     uint8_t index_x = 0;
     uint8_t index_y = 0;
     int pixel = 0;
     
-    x += g->render_offset_x;
-    y += g->render_offset_y;
+    x += g.render_offset_x;
+    y += g.render_offset_y;
 
     for (index_y=0;index_y<TILE_HEIGHT;index_y++)
     {
@@ -243,7 +239,7 @@ void draw_rectangle(int x, int y, int w, int h, uint8_t color)
     index_y = 0;
 }
 
-void draw_shadow(struct GameData* g, int x, int y)
+void draw_shadow(int x, int y)
 {    
     int pixel_x = x*TILE_WIDTH;
     int pixel_y = y*TILE_HEIGHT;
@@ -253,30 +249,30 @@ void draw_shadow(struct GameData* g, int x, int y)
         if (TILE_AT(x-1, y-1) == MAP_WALL &&
             TILE_AT(x,   y-1) == MAP_WALL &&
             TILE_AT(x-1, y  ) == MAP_WALL)
-            draw_sprite_tr(g, pixel_x, pixel_y, sprites[SHAD_IN_COR]);
+            draw_sprite_tr(pixel_x, pixel_y, sprites[SHAD_IN_COR]);
             
         else if (TILE_AT(x, y-1) == MAP_WALL)
-            draw_sprite_tr(g, pixel_x, pixel_y, sprites[SHAD_HORZ]);
+            draw_sprite_tr(pixel_x, pixel_y, sprites[SHAD_HORZ]);
         
         else if (TILE_AT(x-1, y) == MAP_WALL)
-            draw_sprite_tr(g, pixel_x, pixel_y, sprites[SHAD_VERT]);
+            draw_sprite_tr(pixel_x, pixel_y, sprites[SHAD_VERT]);
         
         else if (TILE_AT(x-1, y-1) == MAP_WALL)
-            draw_sprite_tr(g, pixel_x, pixel_y, sprites[SHAD_OUT_COR]);
+            draw_sprite_tr(pixel_x, pixel_y, sprites[SHAD_OUT_COR]);
     }
 
     else if (TILE_AT(x, y) == MAP_MINE)
     {
         if (TILE_AT(x-1, y) == MAP_WALL && TILE_AT(x, y-1) == MAP_WALL)
         {
-            draw_sprite_tr (g, pixel_x, pixel_y, sprites[SHAD_MINE]);
-            draw_sprite_tr(g, pixel_x, pixel_y, sprites[SHAD_HORZ]);
+            draw_sprite_tr(pixel_x, pixel_y, sprites[SHAD_MINE]);
+            draw_sprite_tr(pixel_x, pixel_y, sprites[SHAD_HORZ]);
         }
         else if  (TILE_AT(x-1, y) == MAP_WALL)
-            draw_sprite_tr (g, pixel_x, pixel_y, sprites[SHAD_MINE]);
+            draw_sprite_tr (pixel_x, pixel_y, sprites[SHAD_MINE]);
 
         else if (TILE_AT(x, y-1) == MAP_WALL)
-            draw_sprite_tr(g, pixel_x, pixel_y, sprites[SHAD_HORZ]);
+            draw_sprite_tr(pixel_x, pixel_y, sprites[SHAD_HORZ]);
     }
 
     else if (TILE_AT(x, y) == MAP_KEY)
@@ -284,14 +280,14 @@ void draw_shadow(struct GameData* g, int x, int y)
 
         if (TILE_AT(x-1, y) == MAP_WALL && TILE_AT(x, y-1) == MAP_WALL)
         {
-            draw_sprite_tr (g, pixel_x, pixel_y, sprites[SHAD_KEY]);
-            draw_sprite_tr(g, pixel_x, pixel_y, sprites[SHAD_HORZ]);
+            draw_sprite_tr(pixel_x, pixel_y, sprites[SHAD_KEY]);
+            draw_sprite_tr(pixel_x, pixel_y, sprites[SHAD_HORZ]);
         }
         else if  (TILE_AT(x-1, y) == MAP_WALL)
-            draw_sprite_tr (g, pixel_x, pixel_y, sprites[SHAD_KEY]);
+            draw_sprite_tr (pixel_x, pixel_y, sprites[SHAD_KEY]);
 
         else if (TILE_AT(x, y-1) == MAP_WALL)
-            draw_sprite_tr(g, pixel_x, pixel_y, sprites[SHAD_HORZ]);
+            draw_sprite_tr(pixel_x, pixel_y, sprites[SHAD_HORZ]);
     }
 }
 
@@ -339,26 +335,26 @@ void render_text(int x, int y, char* string, uint8_t color)
     }
 }
 
-void render_floor(struct GameData* g, int x, int y) // used to empty tiles after an item is picked up
+void render_floor(int x, int y) // used to empty tiles after an item is picked up
 {
-    draw_sprite     (g, x * TILE_WIDTH,y * TILE_HEIGHT,sprites[TILE_FLOOR]);
-    draw_shadow     (g, x, y);
+    draw_sprite     (x * TILE_WIDTH,y * TILE_HEIGHT,sprites[TILE_FLOOR]);
+    draw_shadow     (x, y);
 }
 
-void render_door(struct GameData* g, int x, int y) // used to draw an open door
+void render_door(int x, int y) // used to draw an open door
 {
-    draw_sprite     (g, x * TILE_WIDTH,y * TILE_HEIGHT, sprites[TILE_FLOOR]);
-    draw_shadow     (g, x, y);
-    draw_sprite_tr  (g, x * TILE_WIDTH,y * TILE_HEIGHT, sprites[TILE_DOOR_O]);
+    draw_sprite     (x * TILE_WIDTH,y * TILE_HEIGHT, sprites[TILE_FLOOR]);
+    draw_shadow     (x, y);
+    draw_sprite_tr  (x * TILE_WIDTH,y * TILE_HEIGHT, sprites[TILE_DOOR_O]);
 }
 
-void render_mine(struct GameData* g, int x, int y) // used to draw mines, duh
+void render_mine(int x, int y) // used to draw mines, duh
 {
-    draw_sprite (g, x * TILE_WIDTH,y * TILE_HEIGHT,sprites[COMP_MINE]);
-    draw_shadow (g, x, y);
+    draw_sprite (x * TILE_WIDTH,y * TILE_HEIGHT,sprites[COMP_MINE]);
+    draw_shadow (x, y);
 }
 
-void typewriter(struct Options* opt, int x, int y, char* string, uint8_t color)
+void typewriter(int x, int y, char* string, uint8_t color)
 {
     int old_x = x;
 
@@ -371,7 +367,7 @@ void typewriter(struct Options* opt, int x, int y, char* string, uint8_t color)
         draw_text(x, y, c - 32, color);
         x = x + 10;
         i++;
-        if (opt->sfx_on == 1)
+        if (opt.sfx_on == TRUE)
             sound_typing();
         memcpy(VGA,screen_buf,SCREEN_SIZE);
         delay(100);
@@ -383,43 +379,43 @@ void typewriter(struct Options* opt, int x, int y, char* string, uint8_t color)
     }
 }
 
-void render_stats(struct GameData* g)
+void render_stats()
 {
     char lvl_str[12];
     char keys_str[12];
     char lives_str[12];
 
-    sprintf(lvl_str, "LEVEL: %d", g->level_num);
-    sprintf(keys_str, "KEYS: %d", g->keys_acquired);
-    sprintf(lives_str, "LIVES: %d", g->player_lives);
+    sprintf(lvl_str, "LEVEL: %d", g.level_num);
+    sprintf(keys_str, "KEYS: %d", g.keys_acquired);
+    sprintf(lives_str, "LIVES: %d", g.player_lives);
 
     render_text(1, 1, lvl_str, 15);
 
-    if (g->keys_acquired < 100)
+    if (g.keys_acquired < 100)
         render_text(120, 1, keys_str, 15);
     else
         render_text(120, 1, "KEYS: 99", 15);
     
-    if (g->player_lives > -1 && g->player_lives < 100)
+    if (g.player_lives > -1 && g.player_lives < 100)
         render_text(230, 1, lives_str, 15);
-    else if (g->player_lives > 99)
+    else if (g.player_lives > 99)
         render_text(230, 1, "LIVES: 99", 15);
-    else if (g->player_lives > -2)
+    else if (g.player_lives > -2)
         render_text(230, 1, "LIVES: 0", 15);
 }
 
-void render_maze(struct GameData* g)
+void render_maze()
 {   
     int counter = 0;
     int y = 0;
     int x = 0;
     
-    while (y < g->level_height)
+    while (y < g.level_height)
     {
-        while (x < g->level_width)
+        while (x < g.level_width)
         {
-            draw_sprite(g, x * TILE_WIDTH, y * TILE_HEIGHT, gfx_table[g->tile_data[counter]]);
-            draw_shadow(g, x, y);
+            draw_sprite(x * TILE_WIDTH, y * TILE_HEIGHT, gfx_table[g.tile_data[counter]]);
+            draw_shadow(x, y);
             counter++;
             x++;
         }
@@ -427,24 +423,24 @@ void render_maze(struct GameData* g)
     x = 0;
     }
 
-    render_stats(g);
+    render_stats();
 }
 
-void anim_explosion(struct GameData* g)
+void anim_explosion()
 {
-    struct Actor p = g->Actors[0];
+    struct Actor p = g.Actors[0];
     uint8_t* pixels;
 
     p.sprite = explo_sprite;
     pixels = p.sprite.pixels;
 
     SET_TILE(p.x, p.y, MAP_FLOOR); // "delete" mine
-    render_floor(g, p.x, p.y); // "delete" player sprite
+    render_floor(p.x, p.y); // "delete" player sprite
 
     for (p.sprite.frame = 0;p.sprite.frame < p.sprite.num_frames;p.sprite.frame++)
     {
         delay(150);
-        draw_sprite_tr(g, p.x * TILE_WIDTH,
+        draw_sprite_tr(p.x * TILE_WIDTH,
                        p.y * TILE_HEIGHT,
                        pixels + (p.sprite.frame * p.sprite.size));
         memcpy(VGA,screen_buf,SCREEN_SIZE);
@@ -453,26 +449,26 @@ void anim_explosion(struct GameData* g)
     for (p.sprite.frame = 2;p.sprite.frame > -1;p.sprite.frame--)
     {
         delay(150);
-        render_floor(g, p.x, p.y);
-        draw_sprite_tr(g, p.x * TILE_WIDTH,
+        render_floor(p.x, p.y);
+        draw_sprite_tr(p.x * TILE_WIDTH,
                        p.y * TILE_HEIGHT,
                        pixels + (p.sprite.frame * p.sprite.size));
         memcpy(VGA,screen_buf,SCREEN_SIZE);
     }
 
     delay(150);
-    render_floor(g, p.x, p.y);
+    render_floor(p.x, p.y);
     
     p.sprite = player_sprite;   
 }
 
-void render_actors(struct GameData* g)
+void render_actors()
 {
     uint8_t* pixels;
     int i;
     
     i = 0;
-    while (i < g->actor_count)
+    while (i < g.actor_count)
     {
         
         if (pixels == sprites[SPR_ERROR])
@@ -482,36 +478,36 @@ void render_actors(struct GameData* g)
         }
 
         else
-            pixels = g->Actors[i].sprite.pixels;
+            pixels = g.Actors[i].sprite.pixels;
 
-        g->Actors[i].sprite.frame++;
+        g.Actors[i].sprite.frame++;
 
-        if (g->Actors[i].sprite.frame >= g->Actors[i].sprite.num_frames)
-            g->Actors[i].sprite.frame = 0;
+        if (g.Actors[i].sprite.frame >= g.Actors[i].sprite.num_frames)
+            g.Actors[i].sprite.frame = 0;
         
-        draw_sprite_tr(g, g->Actors[i].x * TILE_WIDTH,
-                    g->Actors[i].y * TILE_HEIGHT,
-                    pixels + (g->Actors[i].sprite.frame * g->Actors[i].sprite.size));
+        draw_sprite_tr(g.Actors[i].x * TILE_WIDTH,
+                    g.Actors[i].y * TILE_HEIGHT,
+                    pixels + (g.Actors[i].sprite.frame * g.Actors[i].sprite.size));
 
         // if actor has changed position, render an empty floor tile in the old location, unless it's a door frame or mine         
-        if (g->Actors[i].x != g->Actors[i].old_x || g->Actors[i].y != g->Actors[i].old_y)
+        if (g.Actors[i].x != g.Actors[i].old_x || g.Actors[i].y != g.Actors[i].old_y)
         {
-            if (TILE_AT(g->Actors[i].old_x, g->Actors[i].old_y) == MAP_FLOOR)
-                render_floor(g, g->Actors[i].old_x, g->Actors[i].old_y);
-            else if (TILE_AT(g->Actors[i].old_x, g->Actors[i].old_y) == MAP_DOOR_O)
-                render_door(g, g->Actors[i].old_x, g->Actors[i].old_y);
-            else if (TILE_AT(g->Actors[i].old_x, g->Actors[i].old_y) == MAP_MINE)
-                render_mine(g, g->Actors[i].old_x, g->Actors[i].old_y);
+            if (TILE_AT(g.Actors[i].old_x, g.Actors[i].old_y) == MAP_FLOOR)
+                render_floor(g.Actors[i].old_x, g.Actors[i].old_y);
+            else if (TILE_AT(g.Actors[i].old_x, g.Actors[i].old_y) == MAP_DOOR_O)
+                render_door(g.Actors[i].old_x, g.Actors[i].old_y);
+            else if (TILE_AT(g.Actors[i].old_x, g.Actors[i].old_y) == MAP_MINE)
+                render_mine(g.Actors[i].old_x, g.Actors[i].old_y);
         }
                      
         i++;
     }
     
     i = 0;
-    while (i < g->actor_count)
+    while (i < g.actor_count)
     {
         
-        switch (g->Actors[i].type)
+        switch (g.Actors[i].type)
         {
             case ACTOR_GRAVE:   pixels = sprites[SPR_GRAVE];  break;
             case ACTOR_EMPTY:   pixels = sprites[SPR_GRAVE];  break;
@@ -524,96 +520,77 @@ void render_actors(struct GameData* g)
             continue;
         }
         
-        draw_sprite_tr(g, g->Actors[i].x * TILE_WIDTH,
-                       g->Actors[i].y * TILE_HEIGHT,
+        draw_sprite_tr(g.Actors[i].x * TILE_WIDTH,
+                       g.Actors[i].y * TILE_HEIGHT,
                        pixels);                       
         i++;
     }
 }
 
-void render_menu_text(struct Options* opt, struct Cursor* cursor)
+void render_menu_text()
 {
-    if (opt->menu_status == MENU_MAIN)
-    {
-        cursor->x = 105;
-        render_text(125, 65, "START", 15);
-        render_text(125, 80, "OPTIONS", 15);
-        render_text(125, 95, "HELP!", 15);
-        render_text(125, 110, "STORY", 15);
-        render_text(125, 125, "QUIT", 15);
-    }
+    int i = 0;
+    int y = current_menu->start_y;
 
-    else if(opt->menu_status == MENU_OPTIONS)
+    if (current_menu == &optionsmenu)
     {
-        cursor->x = 91;
-        render_text(111, 65, "SOUNDS", 15);
-        if (opt->sfx_on == TRUE)
+        for(i = 0; i < current_menu->num_selections; i++)
+        {
+            render_text(current_menu->cursor_x + 20, y, current_menu->options[i].text, 15);
+            y += current_menu->cursor_spacing;
+        }
+        if (opt.sfx_on == TRUE)
             render_text(191, 65, "ON", 15);
-        else if (opt->sfx_on == FALSE)
+        else if (opt.sfx_on == FALSE)
             render_text(191, 65, "OFF", 15);
-        render_text(111, 105, "MUSIC", 15);
-        if (opt->music_on == TRUE)
+        if (opt.music_on == TRUE)
             render_text(191, 105, "ON", 15);
-        else if (opt->music_on == FALSE)
+        else if (opt.music_on == FALSE)
             render_text(191, 105, "OFF", 15);
-        render_text(111, 145, "KEY CONFIG", 15);
     }
-    else if(opt->menu_status == MENU_STORY)
-    {
-        render_text(200, 185, "VER. 0.0019A", 0); 
-        typewriter(opt, 4, 52, story_text, 15);
-    }
-
-    render_text(200, 185, "VER. 0.0019A", 0);    
-}
-
-void draw_help_contents(struct GameData* g)
-{
-    // reset offsets in case they have been changed in-game
-    g->render_offset_x = 0;
-    g->render_offset_y = 0;
-
-    draw_sprite_tr(g, 48, 64, anims[SPR_PLAYER]);
-    draw_sprite(g, 48, 76, sprites[TILE_WALL]);
-    draw_sprite_tr(g, 48, 88, anims[SPR_GUARD]);
-    draw_sprite_tr(g, 48, 100, sprites[ITEM_MINE]);
-    draw_sprite_tr(g, 48, 112, sprites[TILE_DOOR_C]);
-    draw_sprite_tr(g, 48, 124, sprites[ITEM_KEY]);
-    draw_sprite(g, 48, 135,sprites[TILE_EXIT]);
-}
-
-void change_menu(struct Options* opt, struct Cursor* cursor)
-{
-    char* bgfilename;
-
-    if (opt->menu_status == MENU_OPTIONS)
-        bgfilename = "GFX/OPTIONS.7UP";
-    
-    else if (opt->menu_status == MENU_KEYCONF)
-        bgfilename = "GFX/KCONF.7UP";
-
-    else if (opt->menu_status == MENU_HELP)
-        bgfilename = "GFX/HELP.7UP";
-
-    else if (opt->menu_status == MENU_STORY)
-        bgfilename = "GFX/STORY.7UP";
 
     else
-        bgfilename = "GFX/SPLASH.7UP";
+    {
+        for(i = 0; i < current_menu->num_selections; i++)
+        {
+            render_text(current_menu->cursor_x + 20, y, current_menu->options[i].text, 15);
+            y += current_menu->cursor_spacing;
+        }
+    }
 
-    load_gfx(bgfilename, screen_buf, 64000);
-
-    render_menu_text(opt, cursor);
+    render_text(230, 185, "V.0.0023A", 0);
 }
 
-void render_cursor(int x, int old_y, int new_y)
+void draw_help_contents()
 {
-    render_text(x, new_y, "->", 15);
+    // reset offsets in case they have been changed in-game
+    g.render_offset_x = 0;
+    g.render_offset_y = 0;
+    
+    draw_sprite_tr(48, 64, anims[SPR_PLAYER]);
+    draw_sprite(48, 76, sprites[TILE_WALL]);
+    draw_sprite_tr(48, 88, anims[SPR_GUARD]);
+    draw_sprite_tr(48, 100, sprites[ITEM_MINE]);
+    draw_sprite_tr(48, 112, sprites[TILE_DOOR_C]);
+    draw_sprite_tr(48, 124, sprites[ITEM_KEY]);
+    draw_sprite(48, 135,sprites[TILE_EXIT]);
 }
 
-void render_menu(struct Cursor* cursor)
+void change_menu()
 {
-    render_cursor(cursor->x, cursor->old_y, cursor->new_y);
+    load_gfx(current_menu->bgfilename, screen_buf, 64000);
+
+    render_menu_text();
+}
+
+void render_cursor(int x, int y)
+{
+    render_text(x, y, "->", 15);
+}
+
+void render_menu()
+{
+    render_cursor(current_menu->cursor_x, current_menu->cursor_y);
 }
 
 void render_end()
@@ -622,11 +599,11 @@ void render_end()
     render_text(122, 96, "YOU WIN!", 14);
 }
 
-void start_screen(struct Options* opt)
+void start_screen()
 {
     fill_screen(0);
     
-    typewriter(opt, 102, 96, "GET PSYCHED!", 1);
+    typewriter(102, 96, "GET PSYCHED!", 1);
 }
 
 void gameover_screen()
@@ -674,31 +651,30 @@ void render_time()
     render_text(210, 185, time_str, 15);
 }
 
-void render(struct GameData* g, struct Cursor* cursor, struct Options* opt)
+void render()
 {        
     // in case playing, just died, or exited
     // draw play field and objects
-    if (g->game_state == GAME_INGAME ||
-        g->game_state == GAME_OVER ||
-        g->game_state == GAME_WIN)
+    if (g.game_state == GAME_INGAME ||
+        g.game_state == GAME_OVER ||
+        g.game_state == GAME_WIN)
     {
         render_time();
-        render_actors(g);
-        if (g->Actors[0].type == ACTOR_EXPLO)
-            anim_explosion(g);
+        render_actors();
+        if (g.Actors[0].type == ACTOR_EXPLO)
+            anim_explosion();
     }
-    // if main, options or keyconfig menu ...
-    else if (g->game_state == GAME_MENU)
+    // if menu ...
+    else if (g.game_state == GAME_MENU)
     {
-        if (opt->menu_status != MENU_HELP && opt->menu_status != MENU_STORY)
-            render_menu(cursor);
+        render_menu();
     }
     // if end ...
-    else if (g->game_state == GAME_END)
+    else if (g.game_state == GAME_END)
     {
         render_end();
     }
     
-    vretrace(&g, &cursor, &opt);
+    vretrace();
     memcpy(VGA,screen_buf,SCREEN_SIZE);
 }

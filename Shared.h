@@ -28,12 +28,6 @@
 #define GAME_WIN            3
 #define GAME_END            4
 
-#define MENU_MAIN           0
-#define MENU_OPTIONS        1
-#define MENU_HELP           2
-#define MENU_STORY          3
-#define MENU_KEYCONF        4
-
 #define MAX_ACTORS          10
 #define LEVEL_SIZE          level_width * level_height
 
@@ -64,7 +58,7 @@
 #define TICKS               (*(volatile unsigned long far *)(0x0040006CL))
 
 // macros
-#define TILE_AT(x, y)           g->tile_data[(y) * g->level_width + (x)]
+#define TILE_AT(x, y)           g.tile_data[(y) * g.level_width + (x)]
 #define SET_TILE(x, y, tile)    TILE_AT(x, y) = tile
 
 // structs
@@ -86,7 +80,6 @@ struct GameData
 {   
     int game_running;
     int game_state;
-    /*int new_game;*/
 
     int level_num;
     int level_width;
@@ -102,18 +95,8 @@ struct GameData
     struct Actor Actors[MAX_ACTORS];
 };
 
-struct Cursor
+struct Settings
 {
-    int x;
-    int old_y;
-    int new_y;
-    int8_t selection;
-    int8_t old_selection;
-};
-
-struct Options
-{
-    uint8_t menu_status;
     uint8_t debugmode;
     uint8_t sfx_on;
     uint8_t music_on;
@@ -122,6 +105,26 @@ struct Options
     uint8_t down_movement;
     uint8_t right_movement;
 };
+
+typedef void (*fnp)();
+
+typedef struct
+{
+  char* text;
+  fnp action;
+} Option_t;
+
+typedef struct
+{
+  char* bgfilename;
+  int num_selections;
+  int cursor_loc;
+  int start_y;
+  int cursor_y;
+  int cursor_x;
+  int cursor_spacing;
+  Option_t* options;
+} Menu_t;
 
 enum SPRITES
 {
@@ -154,5 +157,6 @@ enum ANIMS
     NUM_ANIMS
 };
 
+void start_game();
 
 #endif /* SHARED_H */

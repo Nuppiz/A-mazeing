@@ -11,25 +11,22 @@ uint32_t vretlen = 0;
 uint32_t secdiv = 0;
 uint32_t timer = 0;
 
+/* game options and menu "status" struct */
+struct Settings opt;
+/* local variables all inside GameData struct called g */
+struct GameData g;
+
 extern uint16_t song_i;
 
-void init_gamedata(struct GameData* g, struct Cursor* cursor, struct Options* opt)
+void init_gamedata()
 {
     /* init game data */
     memset(g, 0, sizeof(struct GameData));
 
-    /* init cursor data */
-    cursor->x = 105;
-    cursor->old_y = 65;
-    cursor->new_y = 65;
-    cursor->selection = 0;
-    cursor->old_selection = 0;
-
     /* init options */
-    opt->menu_status = MENU_MAIN;
-    opt->debugmode = FALSE;
-    opt->sfx_on = TRUE;
-    opt->music_on = TRUE;
+    opt.debugmode = FALSE;
+    opt.sfx_on = TRUE;
+    opt.music_on = TRUE;
 
     song_i = 0;
 }
@@ -69,7 +66,7 @@ void init_clock()
     secdiv = vrets + 50;
 }
 
-void init(struct GameData* g, struct Cursor* cursor, struct Options* opt)
+void init()
 {
     /* init gfx */
     set_mode(VGA_256_COLOR_MODE);
@@ -84,10 +81,11 @@ void init(struct GameData* g, struct Cursor* cursor, struct Options* opt)
     printf("Initialising game data...");
 
     /* init gamedata */
-    init_gamedata(g, cursor, opt);
-    g->game_running = TRUE;
-    g->game_state = GAME_MENU;
-    change_menu(opt, cursor);
+    menu_main();
+    init_gamedata();
+    g.game_running = TRUE;
+    g.game_state = GAME_MENU;
+    change_menu();
 
     printf("OK!\n");
     
@@ -95,7 +93,7 @@ void init(struct GameData* g, struct Cursor* cursor, struct Options* opt)
 
     /* init keyboard */
     init_keyboard();
-    init_default_keys(opt);
+    init_default_keys();
 
     printf("OK!\n");
 
@@ -120,18 +118,10 @@ void quit()
 void main()
 {
     uint32_t last_logic = 0;
-    //uint32_t last_audio = 0;
     uint32_t last_video = 0;
     
-    /* game options and menu "status" struct */
-    struct Options opt;
-    /* local variables all inside GameData struct called g */
-    struct GameData g;
-    /* cursor location inside a struct so it can easily be accessed everywhere */
-    struct Cursor cursor;
-    
     /* initialize everything */
-    init(&g, &cursor, &opt);
+    init();
 
     /* run game, get keyboard state first */
     while (g.game_running == TRUE)
@@ -140,17 +130,17 @@ void main()
         if (last_logic + LOGIC_INTERVAL < timer)
         {
             last_logic = timer;
-            process_input(&g, &cursor, &opt);
-            game_logic(&g, &cursor, &opt);
+            process_input();
+            game_logic();
         }
 
         if (g.game_state != GAME_MENU)
-            play_sequence(&opt);
+            play_sequence();
 
         if (last_video + RENDER_INTERVAL < timer)
         {
             last_video = timer;
-            render(&g, &cursor, &opt);
+            render();
         }
         else
             vretrace();

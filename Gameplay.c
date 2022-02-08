@@ -2,104 +2,91 @@
 #include "Gameplay.h"
 
 extern struct GameData g;
-extern struct Options opt;
-extern uint16_t song_i;
+extern struct Settings opt;
+extern int16_t song_i;
 
-void start_game(struct GameData* g, struct Options* opt)
+void player_death()
 {
-    start_screen(opt);
-    delay(2000);
+    struct Actor* p = &g.Actors[0];
     
     fill_screen(0);
-    g->game_state = GAME_INGAME;
-    g->level_num = 1;
-    g->player_lives = 3;
-    level_loader(g);
-    music_track_select(g);
-}
+    render_maze();
+    render_actors();
+    render();
 
-void player_death(struct GameData* g, struct Options* opt)
-{
-    struct Actor* p = &g->Actors[0];
-    
-    fill_screen(0);
-    render_maze(g);
-    render_actors(g);
-    render(g);
-
-    if (opt->sfx_on == 1)
+    if (opt.sfx_on == 1)
         switch_to_effect(1);
     else
         delay(600);
     
     p->type = ACTOR_PLAYER;
-    _fmemset(g->object_map, ACTOR_EMPTY, MAPSIZE);
+    _fmemset(g.object_map, ACTOR_EMPTY, MAPSIZE);
     fill_screen(0);
-    level_loader(g);
+    level_loader();
 }
 
-void add_key(struct GameData* g, struct Options* opt)
+void add_key()
 {
-    g->keys_acquired++;
-    if (opt->sfx_on == 1)
+    g.keys_acquired++;
+    if (opt.sfx_on == 1)
         switch_to_effect(2);
     draw_rectangle(180, 1, 18, 8, 0);
-    if (g->level_height > 23)
-        render_maze(g);
+    if (g.level_height > 23)
+        render_maze();
     else
-        render_stats(g);
+        render_stats();
 }
 
-void remove_key(struct GameData* g)
+void remove_key()
 {
-    g->keys_acquired--;
+    g.keys_acquired--;
     draw_rectangle(180, 1, 18, 8, 0);
-    if (g->level_height > 23)
-        render_maze(g);
+    if (g.level_height > 23)
+        render_maze();
     else
-        render_stats(g);
+        render_stats();
 }
 
-void add_life(struct GameData* g, struct Options* opt)
+void add_life()
 {
-    g->player_lives++;
-    if (opt->sfx_on == 1)
+    g.player_lives++;
+    if (opt.sfx_on == 1)
         switch_to_effect(2);
     draw_rectangle(300, 1, 18, 8, 0);
-    if (g->level_height > 23)
-        render_maze(g);
+    if (g.level_height > 23)
+        render_maze();
     else
-        render_stats(g);
+        render_stats();
 }
 
-void remove_life(struct GameData* g)
+void remove_life()
 {
-    g->player_lives--;
+    g.player_lives--;
     draw_rectangle(300, 1, 18, 8, 0);
-    if (g->level_height > 23)
-        render_maze(g);
+    if (g.level_height > 23)
+        render_maze();
     else
-        render_stats(g);
+        render_stats();
 }
 
-void level_skip(struct GameData* g)
+void level_skip()
 {
-    g->game_state = GAME_WIN;
+    g.game_state = GAME_WIN;
 }
 
-void suicide(struct GameData* g)
+void suicide()
 {
-    g->game_state = GAME_OVER;
+    g.game_state = GAME_OVER;
 }
 
-void move_actors(struct GameData* g, struct Options* opt)
+void move_actors()
 {
     int new_x, new_y;
     int i = 0;
-    while (i < g->actor_count)
+    while (i < g.actor_count)
     {
-        struct Actor* p_actor = &g->Actors[i++];
-        struct Actor* player = &g->Actors[0];
+        struct Actor* p_actor = &g.Actors[i++];
+        struct Actor* player = &g.Actors[0];
 
         // set coordinates for new square to (potentially) move into
         // based on adding velocity to current position...
@@ -114,22 +101,22 @@ void move_actors(struct GameData* g, struct Options* opt)
             p_actor->x = new_x;
             p_actor->y = new_y;
 
-            if (g->object_map[new_y * g->level_width + new_x] == ACTOR_GUARD)
+            if (g.object_map[new_y * g.level_width + new_x] == ACTOR_GUARD)
             {
                 player->type = ACTOR_GRAVE;
                 p_actor->type = ACTOR_GRAVE;
-                remove_life(g);
+                remove_life();
                 
-                    if (g->player_lives < 0)
-                        g->game_state = GAME_OVER;
+                    if (g.player_lives < 0)
+                        g.game_state = GAME_OVER;
                     else
-                        player_death(g, opt);
+                        player_death();
                 break;
             }
             else
             {
-                g->object_map[p_actor->y * g->level_width + p_actor->x] = p_actor->type;
-                g->object_map[p_actor->old_y * g->level_width + p_actor->old_x] = ACTOR_EMPTY;
+                g.object_map[p_actor->y * g.level_width + p_actor->x] = p_actor->type;
+                g.object_map[p_actor->old_y * g.level_width + p_actor->old_x] = ACTOR_EMPTY;
             }
         }
 
@@ -138,22 +125,22 @@ void move_actors(struct GameData* g, struct Options* opt)
             p_actor->x = new_x;
             p_actor->y = new_y;
 
-            if (g->object_map[new_y * g->level_width + new_x] == ACTOR_PLAYER)
+            if (g.object_map[new_y * g.level_width + new_x] == ACTOR_PLAYER)
             {
                 player->type = ACTOR_GRAVE;
                 p_actor->type = ACTOR_GRAVE;
-                remove_life(g);
+                remove_life();
                 
-                    if (g->player_lives < 0)
-                        g->game_state = GAME_OVER;
+                    if (g.player_lives < 0)
+                        g.game_state = GAME_OVER;
                     else
-                        player_death(g, opt);
+                        player_death();
                 break;
             }
             else
             {
-                g->object_map[p_actor->y * g->level_width + p_actor->x] = p_actor->type;
-                g->object_map[p_actor->old_y * g->level_width + p_actor->old_x] = ACTOR_EMPTY;
+                g.object_map[p_actor->y * g.level_width + p_actor->x] = p_actor->type;
+                g.object_map[p_actor->old_y * g.level_width + p_actor->old_x] = ACTOR_EMPTY;
             }
         }
         // if colliding into a wall and is NOT player, reverse dir
@@ -165,18 +152,18 @@ void move_actors(struct GameData* g, struct Options* opt)
     }
 }
 
-void player_hit_detect(struct GameData* g, struct Options* opt)
+void player_hit_detect()
 {
-    struct Actor* p = &g->Actors[0];
+    struct Actor* p = &g.Actors[0];
     
     // step on mine
     if (ACTOR_ON_TILE(p, MAP_MINE))
     {
         p->type = ACTOR_EXPLO;
-        remove_life(g);
+        remove_life();
         
-        if (g->player_lives < 0)
-            g->game_state = GAME_OVER;
+        if (g.player_lives < 0)
+            g.game_state = GAME_OVER;
         else
             player_death(g, opt);
     }
@@ -191,34 +178,34 @@ void player_hit_detect(struct GameData* g, struct Options* opt)
     else if (ACTOR_ON_TILE(p, MAP_DOOR_C))
     {
         // no keys; door remains closed, so cancel movement
-        if (g->keys_acquired < 1)
+        if (g.keys_acquired < 1)
         {
             p->x -= p->x_vel;
             p->y -= p->y_vel;
-            if (opt->sfx_on == 1)
+            if (opt.sfx_on == 1)
                 switch_to_effect(4);;
         }
         // otherwise, we remain in the door tile and change tile to DOOR_O
         else
         {
-            remove_key(g);
+            remove_key();
             SET_TILE(p->x, p->y, MAP_DOOR_O);
             render_door(g, p->x, p->y);
-            if (opt->sfx_on == 1)
+            if (opt.sfx_on == 1)
                 switch_to_effect(3);
         }
     }
     // exit and win the level
     else if (ACTOR_ON_TILE(p, MAP_EXIT))
-        g->game_state = GAME_WIN;
+        g.game_state = GAME_WIN;
 }
 
-void check_state(struct GameData* g, struct Options* opt, struct Cursor* cursor)
+void check_state()
 {
-    if (g->game_state == GAME_OVER)
+    if (g.game_state == GAME_OVER)
     {
         gameover_screen();
-        if (opt->music_on == 1)
+        if (opt.music_on == 1)
         {
             sound_gameover();
             delay(1000);
@@ -226,15 +213,12 @@ void check_state(struct GameData* g, struct Options* opt, struct Cursor* cursor)
         else
             delay(3000);
         song_i = 0;
-        g->game_state = GAME_MENU;
-        opt->menu_status = MENU_MAIN;
-        change_menu(opt, cursor);
-        cursor->new_y = 65;
-        cursor->selection = 0;
+        g.game_state = GAME_MENU;
+        menu_main();
     }
-    else if (g->game_state == GAME_WIN)
+    else if (g.game_state == GAME_WIN)
     {
-        if (opt->music_on == 1)
+        if (opt.music_on == 1)
         {
             end_song();
             delay(100);
@@ -242,24 +226,24 @@ void check_state(struct GameData* g, struct Options* opt, struct Cursor* cursor)
         else
             delay(1500);
         
-        if (g->level_num == LAST_LEVEL)
-            g->game_state = GAME_END;
+        if (g.level_num == LAST_LEVEL)
+            g.game_state = GAME_END;
         else
-            next_level(g);
+            next_level();
     }
-    else if (g->game_state == GAME_END)
+    else if (g.game_state == GAME_END)
     {
-        if (opt->music_on == 1)
+        if (opt.music_on == 1)
         {
-            music_track_select(g);
+            music_track_select();
         }
     }
 }
 
-void game_logic(struct GameData* g, struct Cursor* cursor, struct Options* opt)
+void game_logic()
 {
-    check_state(g, opt, cursor);
-    if (g->game_state == GAME_INGAME)
+    check_state(g, opt);
+    if (g.game_state == GAME_INGAME)
     {
         move_actors(g, opt);
         player_hit_detect(g, opt);

@@ -10,7 +10,8 @@ uint16_t notes[11] = {277, 294, 311, 330, 349, 370, 392, 415, 440, 466, 494};
 note_sequence* current_sequence;
 note_sequence* prev_sequence;
 
-extern struct Options opt;
+extern struct GameData g;
+extern struct Settings opt;
 extern uint32_t timer;
 uint32_t last_note = 0;
 uint32_t last_effect = 0;
@@ -110,11 +111,11 @@ void loop_song()
     close_speaker();
 }
 
-void music_track_select(struct GameData* g)
+void music_track_select()
 {
-    if(g->game_state == GAME_INGAME)
+    if(g.game_state == GAME_INGAME)
     {
-        switch (g->level_num)
+        switch (g.level_num)
         {
             case 1:   current_sequence = MUSIC_LVL1;  break;
             case 2:   current_sequence = MUSIC_LVL2;  break;
@@ -122,7 +123,7 @@ void music_track_select(struct GameData* g)
             default:  current_sequence = MUSIC_LVL1;  break;
         }
     }
-    else if (g->game_state == GAME_END)
+    else if (g.game_state == GAME_END)
         current_sequence = MUSIC_WIN;
 }
 
@@ -142,11 +143,11 @@ void switch_to_effect(uint8_t effect)
         note_i = 0;
 }
 
-void play_sequence(struct Options* opt)
+void play_sequence()
 {
     if (current_sequence != NULL)
     {
-        if (current_sequence->type == SEQ_MUSIC && opt->music_on == TRUE)
+        if (current_sequence->type == SEQ_MUSIC && opt.music_on == TRUE)
         {
             if (last_note + current_sequence->duration[song_i] * 15 < timer)
             {
@@ -171,7 +172,7 @@ void play_sequence(struct Options* opt)
                 }
             }
         }
-        else if (current_sequence->type == SEQ_EFFECT && opt->sfx_on == TRUE)
+        else if (current_sequence->type == SEQ_EFFECT && opt.sfx_on == TRUE)
         {
             if (last_effect + current_sequence->duration[note_i] * 15 < timer)
             {
