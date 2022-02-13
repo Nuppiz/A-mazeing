@@ -10,6 +10,7 @@ uint16_t *clock=(uint16_t *)0x0000046C;    /* this points to the 18.2hz system c
 uint32_t vretlen = 0;
 uint32_t secdiv = 0;
 uint32_t timer = 0;
+uint32_t last_movement = 0;
 
 /* game options and menu "status" struct */
 struct Settings opt;
@@ -126,7 +127,6 @@ void main()
     /* run game, get keyboard state first */
     while (g.game_running == TRUE)
     {
-
         if (last_logic + LOGIC_INTERVAL < timer)
         {
             last_logic = timer;

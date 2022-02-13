@@ -13,6 +13,8 @@ extern int16_t song_i;
 extern Menu_t* current_menu;
 extern Menu_t mainmenu;
 extern Menu_t kconfmenu;
+extern Weapon* current_weapon;
+extern Weapon weap_pistol;
 
 Input_t Input = {0};
 Input_t* g_Input = &Input;
@@ -198,21 +200,44 @@ void control_ingame()
     else if (axis == Y_AXIS)
     {
         player->y_vel =
-        (KEY_IS_PRESSED(KEY_DOWN)>>1) - (KEY_IS_PRESSED(KEY_UP)>>1);
+        (KEY_WAS_HIT(KEY_DOWN)>>1) - (KEY_WAS_HIT(KEY_UP)>>1);
         
         if (player->y_vel == 0)
+        {
             player->x_vel =
-            (KEY_IS_PRESSED(KEY_RIGHT)>>1) - (KEY_IS_PRESSED(KEY_LEFT)>>1);
+            (KEY_WAS_HIT(KEY_RIGHT)>>1) - (KEY_WAS_HIT(KEY_LEFT)>>1);
+        }
     }
     else if (axis == X_AXIS)
     {
         player->x_vel =
-        (KEY_IS_PRESSED(KEY_RIGHT)>>1) - (KEY_IS_PRESSED(KEY_LEFT)>>1);
+        (KEY_WAS_HIT(KEY_RIGHT)>>1) - (KEY_WAS_HIT(KEY_LEFT)>>1);
         
         if (player->x_vel == 0)
             player->y_vel =
-            (KEY_IS_PRESSED(KEY_DOWN)>>1) - (KEY_IS_PRESSED(KEY_UP)>>1);
+            (KEY_WAS_HIT(KEY_DOWN)>>1) - (KEY_WAS_HIT(KEY_UP)>>1);
     }
+
+    if (KEY_WAS_HIT(KEY_W))
+        player->aim = UP;
+
+    else if (KEY_WAS_HIT(KEY_D))
+        player->aim = RIGHT;
+
+    else if (KEY_WAS_HIT(KEY_S))
+        player->aim = DOWN;
+
+    else if (KEY_WAS_HIT(KEY_A))
+        player->aim = LEFT;
+
+    if (KEY_WAS_HIT(KEY_SPACE))
+        shoot_weapon(&current_weapon);
+
+    if (KEY_WAS_HIT(KEY_0))
+        current_weapon = WEAP_NONE;
+
+    else if (KEY_WAS_HIT(KEY_1))
+        current_weapon = &weap_pistol;
 
     // Misc
     if (KEY_WAS_HIT(KEY_Q) && KEY_WAS_HIT(KEY_BACKSPACE) && opt.debugmode == 0)
@@ -240,13 +265,13 @@ void control_ingame()
     
     if (opt.debugmode == TRUE)
     {
-        if (KEY_WAS_HIT(KEY_K))
+        if (KEY_WAS_HIT(KEY_PAGEUP))
             add_key();
-        else if (KEY_WAS_HIT(KEY_L))
+        else if (KEY_WAS_HIT(KEY_INSERT))
             add_life();
-        else if (KEY_WAS_HIT(KEY_D))
+        else if (KEY_WAS_HIT(KEY_DEL))
             remove_life();
-        else if (KEY_WAS_HIT(KEY_S))
+        else if (KEY_WAS_HIT(KEY_END))
             level_skip();
         else if (KEY_WAS_HIT(KEY_HOME))
             suicide();

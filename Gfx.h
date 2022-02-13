@@ -34,6 +34,7 @@ void typewriter();
 void render_stats();
 void render_maze();
 void anim_explosion();
+void render_previous();
 void render_actors();
 void render_menu_text();
 void draw_help_contents();

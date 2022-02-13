@@ -16,6 +16,7 @@ extern int secdiv;
 extern Menu_t* current_menu;
 extern Menu_t mainmenu;
 extern Menu_t optionsmenu;
+extern Projectile bullet_array[];
 
 // reserve memory for sprites
 uint8_t alphabet [4240];
@@ -24,11 +25,12 @@ uint8_t temp_tile [64];
 
 uint8_t* gfx_table[128];
 
-uint8_t anims[NUM_ANIMS][192];
+uint8_t anims[NUM_ANIMS][256];
 
 struct Sprite player_sprite = {anims[SPR_PLAYER], 8, 8, 64, 3, 0};
 struct Sprite guard_sprite = {anims[SPR_GUARD], 8, 8, 64, 3, 0};
 struct Sprite explo_sprite = {anims[SPR_EXPLO], 8, 8, 64, 3, 0};
+struct Sprite bullet_sprite = {anims[SPR_BULLET], 8, 8, 64, 4, 0};
 
 void set_tile_gfx()
 {
@@ -73,7 +75,7 @@ void load_anim(int anim_id, char* filename)
 {
     FILE* file_ptr;
     file_ptr = fopen(filename, "rb");
-    fread(anims[anim_id], 1, 192, file_ptr);
+    fread(anims[anim_id], 1, 256, file_ptr);
     fclose(file_ptr);
 }
 
@@ -95,8 +97,10 @@ void load_tiles()
     load_anim(SPR_PLAYER, "GFX/PLAYER.7UP");
     load_anim(SPR_GUARD, "GFX/GUARD.7UP");
     load_anim(SPR_EXPLO, "GFX/EXPLO.7UP");
+    load_anim(SPR_BULLET, "GFX/BULLET.7UP");
     load_sprite(SPR_GRAVE, "GFX/GRAVE.7UP");
     load_sprite(SPR_ERROR, "GFX/ERROR.7UP");
+    load_sprite(SPR_CORPSE, "GFX/CORPSE.7UP");
 }
 
 void load_special_gfx()
@@ -462,6 +466,26 @@ void anim_explosion()
     p.sprite = player_sprite;   
 }
 
+void render_prev_pro(Projectile* proj)
+{
+    if (TILE_AT(proj->old_x, proj->old_y) == MAP_FLOOR)
+        render_floor(proj->old_x, proj->old_y);
+    else if (TILE_AT(proj->old_x, proj->old_y) == MAP_DOOR_O)
+        render_door(proj->old_x, proj->old_y);
+    else if (TILE_AT(proj->old_x, proj->old_y) == MAP_MINE)
+        render_mine(proj->old_x, proj->old_y);
+}
+
+void render_previous(struct Actor* actor)
+{
+    if (TILE_AT(actor->old_x, actor->old_y) == MAP_FLOOR)
+        render_floor(actor->old_x, actor->old_y);
+    else if (TILE_AT(actor->old_x, actor->old_y) == MAP_DOOR_O)
+        render_door(actor->old_x, actor->old_y);
+    else if (TILE_AT(actor->old_x, actor->old_y) == MAP_MINE)
+        render_mine(actor->old_x, actor->old_y);
+}
+
 void render_actors()
 {
     uint8_t* pixels;
@@ -470,36 +494,31 @@ void render_actors()
     i = 0;
     while (i < g.actor_count)
     {
-        
         if (pixels == sprites[SPR_ERROR])
         {
             i++;
             continue;
         }
 
-        else
-            pixels = g.Actors[i].sprite.pixels;
-
-        g.Actors[i].sprite.frame++;
-
-        if (g.Actors[i].sprite.frame >= g.Actors[i].sprite.num_frames)
-            g.Actors[i].sprite.frame = 0;
-        
-        draw_sprite_tr(g.Actors[i].x * TILE_WIDTH,
-                    g.Actors[i].y * TILE_HEIGHT,
-                    pixels + (g.Actors[i].sprite.frame * g.Actors[i].sprite.size));
-
         // if actor has changed position, render an empty floor tile in the old location, unless it's a door frame or mine         
         if (g.Actors[i].x != g.Actors[i].old_x || g.Actors[i].y != g.Actors[i].old_y)
         {
-            if (TILE_AT(g.Actors[i].old_x, g.Actors[i].old_y) == MAP_FLOOR)
-                render_floor(g.Actors[i].old_x, g.Actors[i].old_y);
-            else if (TILE_AT(g.Actors[i].old_x, g.Actors[i].old_y) == MAP_DOOR_O)
-                render_door(g.Actors[i].old_x, g.Actors[i].old_y);
-            else if (TILE_AT(g.Actors[i].old_x, g.Actors[i].old_y) == MAP_MINE)
-                render_mine(g.Actors[i].old_x, g.Actors[i].old_y);
+            render_previous(&g.Actors[i]);
         }
-                     
+
+        if (g.Actors[i].type != ACTOR_CORPSE)
+        {
+            pixels = g.Actors[i].sprite.pixels;
+
+            g.Actors[i].sprite.frame++;
+
+            if (g.Actors[i].sprite.frame >= g.Actors[i].sprite.num_frames)
+                g.Actors[i].sprite.frame = 0;
+            
+            draw_sprite_tr(g.Actors[i].x * TILE_WIDTH,
+                        g.Actors[i].y * TILE_HEIGHT,
+                        pixels + (g.Actors[i].sprite.frame * g.Actors[i].sprite.size));
+        }      
         i++;
     }
     
@@ -511,6 +530,7 @@ void render_actors()
         {
             case ACTOR_GRAVE:   pixels = sprites[SPR_GRAVE];  break;
             case ACTOR_EMPTY:   pixels = sprites[SPR_GRAVE];  break;
+            case ACTOR_CORPSE:  pixels = sprites[SPR_CORPSE];  break;
             default:            pixels = sprites[SPR_ERROR];  break;
         }
         
@@ -523,6 +543,37 @@ void render_actors()
         draw_sprite_tr(g.Actors[i].x * TILE_WIDTH,
                        g.Actors[i].y * TILE_HEIGHT,
                        pixels);                       
+        i++;
+    }
+}
+
+void render_bullets()
+{
+    uint8_t* pixels;
+    int i = 0;
+
+    while (i < MAX_BULLETS)
+    {
+        if (bullet_array[i].active == TRUE)
+        {
+            bullet_array[i].sprite = bullet_sprite;
+            
+            pixels = bullet_array[i].sprite.pixels;
+
+            if (bullet_array[i].direction == UP)
+                bullet_array[i].sprite.frame = 0;
+            else if (bullet_array[i].direction == RIGHT)
+                bullet_array[i].sprite.frame = 1;
+            else if (bullet_array[i].direction == DOWN)
+                bullet_array[i].sprite.frame = 2;
+            else if (bullet_array[i].direction == LEFT)
+                bullet_array[i].sprite.frame = 3;
+
+            draw_sprite_tr(bullet_array[i].loc_x * TILE_WIDTH,
+                bullet_array[i].loc_y * TILE_HEIGHT,
+                pixels + (bullet_array[i].sprite.frame * bullet_array[i].sprite.size));
+        }
+        render_prev_pro(&bullet_array[i]);
         i++;
     }
 }
@@ -660,6 +711,7 @@ void render()
         g.game_state == GAME_WIN)
     {
         render_time();
+        render_bullets();
         render_actors();
         if (g.Actors[0].type == ACTOR_EXPLO)
             anim_explosion();
