@@ -223,7 +223,7 @@ void move_actors()
                 }
                 else if (g.object_map[new_y * g.level_width + new_x] == OBJ_BULLET)
                 {
-                    render_previous(&p_actor);
+                    render_previous(p_actor);
                     g.object_map[p_actor->old_y * g.level_width + p_actor->old_x] = ACTOR_EMPTY;
                     p_actor->type = ACTOR_CORPSE;
                     g.object_map[new_y * g.level_width + new_x] = ACTOR_CORPSE;
