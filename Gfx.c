@@ -19,28 +19,22 @@ extern Menu_t optionsmenu;
 extern Projectile bullet_array[];
 
 // reserve memory for sprites
+Sprite sprites[NUM_SPRITES];
+
 uint8_t alphabet [4240];
-uint8_t sprites[NUM_SPRITES][TILE_AREA];
 uint8_t temp_tile [64];
 
 uint8_t* gfx_table[128];
 
-uint8_t anims[NUM_ANIMS][256];
-
-struct Sprite player_sprite = {anims[SPR_PLAYER], 8, 8, 64, 3, 0};
-struct Sprite guard_sprite = {anims[SPR_GUARD], 8, 8, 64, 3, 0};
-struct Sprite explo_sprite = {anims[SPR_EXPLO], 8, 8, 64, 3, 0};
-struct Sprite bullet_sprite = {anims[SPR_BULLET], 8, 8, 64, 4, 0};
-
 void set_tile_gfx()
 {
-    gfx_table['W'] = sprites[TILE_WALL];
-    gfx_table['-'] = sprites[TILE_FLOOR];
-    gfx_table['e'] = sprites[TILE_EXIT];
-    gfx_table['|'] = sprites[COMP_DOOR_C];
-    gfx_table['_'] = sprites[TILE_DOOR_O];
-    gfx_table['*'] = sprites[COMP_KEY];
-    gfx_table['^'] = sprites[COMP_MINE];
+    gfx_table['W'] = sprites[TILE_WALL].pixels;
+    gfx_table['-'] = sprites[TILE_FLOOR].pixels;
+    gfx_table['e'] = sprites[TILE_EXIT].pixels;
+    gfx_table['|'] = sprites[COMP_DOOR_C].pixels;
+    gfx_table['_'] = sprites[TILE_DOOR_O].pixels;
+    gfx_table['*'] = sprites[COMP_KEY].pixels;
+    gfx_table['^'] = sprites[COMP_MINE].pixels;
 }
 
 void set_mode(uint8_t mode)
@@ -63,19 +57,21 @@ void load_gfx(char* filename, uint8_t* destination, uint16_t data_size)
     fclose(file_ptr);
 }
 
-void load_sprite(int tile_id, char* filename)
+void load_sprite(int sprite_id, char* filename)
 {
     FILE* file_ptr;
     file_ptr = fopen(filename, "rb");
-    fread(sprites[tile_id], 1, TILE_AREA, file_ptr);
-    fclose(file_ptr);
-}
-
-void load_anim(int anim_id, char* filename)
-{
-    FILE* file_ptr;
-    file_ptr = fopen(filename, "rb");
-    fread(anims[anim_id], 1, 256, file_ptr);
+    fread(&sprites[sprite_id].w, 2, 1, file_ptr);
+    fseek(file_ptr, 2, SEEK_SET);
+    fread(&sprites[sprite_id].h, 2, 1, file_ptr);
+    fseek(file_ptr, 4, SEEK_SET);
+    fread(&sprites[sprite_id].num_frames, 2, 1, file_ptr);
+    fseek(file_ptr, 6, SEEK_SET);
+    fread(&sprites[sprite_id].transparency, 2, 1, file_ptr);
+    fseek(file_ptr, 8, SEEK_SET);
+    sprites[sprite_id].pixels = malloc(sprites[sprite_id].w * sprites[sprite_id].h);
+    fread(sprites[sprite_id].pixels, 1, sprites[sprite_id].w * sprites[sprite_id].h, file_ptr);
+    sprites[sprite_id].size = (sprites[sprite_id].w * sprites[sprite_id].h) / sprites[sprite_id].num_frames;
     fclose(file_ptr);
 }
 
@@ -83,24 +79,28 @@ void load_tiles()
 {
     load_sprite(TILE_FLOOR, "GFX/FLOOR.7UP");
     load_sprite(TILE_WALL, "GFX/BRICKS.7UP");
+    load_sprite(TILE_EXIT, "GFX/EXIT.7UP");
     load_sprite(TILE_DOOR_C, "GFX/DOORC.7UP");
     load_sprite(TILE_DOOR_O, "GFX/DOORO.7UP");
-    load_sprite(TILE_EXIT, "GFX/EXIT.7UP");
     load_sprite(ITEM_KEY, "GFX/KEY.7UP");
     load_sprite(ITEM_MINE, "GFX/MINE.7UP");
+    load_sprite(SPR_PLAYER, "GFX/PLAYER.7UP");
+    load_sprite(SPR_GUARD, "GFX/GUARD.7UP");
+    load_sprite(SPR_EXPLO, "GFX/EXPLO.7UP");
+    load_sprite(SPR_BULLET, "GFX/BULLET.7UP");
+    load_sprite(SPR_GRAVE, "GFX/GRAVE.7UP");
+    load_sprite(SPR_CORPSE, "GFX/CORPSE.7UP");
+    load_sprite(SPR_ERROR, "GFX/ERROR.7UP");
     load_sprite(SHAD_IN_COR, "GFX/SHAD_IC.7UP");
     load_sprite(SHAD_HORZ, "GFX/SHAD_H.7UP");
     load_sprite(SHAD_VERT, "GFX/SHAD_V.7UP");
     load_sprite(SHAD_OUT_COR, "GFX/SHAD_OC.7UP");
     load_sprite(SHAD_MINE, "GFX/SHAD_M.7UP");
     load_sprite(SHAD_KEY, "GFX/SHAD_K.7UP");
-    load_anim(SPR_PLAYER, "GFX/PLAYER.7UP");
-    load_anim(SPR_GUARD, "GFX/GUARD.7UP");
-    load_anim(SPR_EXPLO, "GFX/EXPLO.7UP");
-    load_anim(SPR_BULLET, "GFX/BULLET.7UP");
-    load_sprite(SPR_GRAVE, "GFX/GRAVE.7UP");
-    load_sprite(SPR_ERROR, "GFX/ERROR.7UP");
-    load_sprite(SPR_CORPSE, "GFX/CORPSE.7UP");
+    // malloc memory
+    sprites[COMP_DOOR_C].pixels = malloc(TILE_AREA);
+    sprites[COMP_KEY].pixels = malloc(TILE_AREA);
+    sprites[COMP_MINE].pixels = malloc(TILE_AREA);
 }
 
 void load_special_gfx()
@@ -112,14 +112,14 @@ void composite_sprite(uint8_t* background, uint8_t* foreground, uint8_t* destina
 {
     draw_temp(background);
     draw_temp(foreground);
-    _fmemcpy(destination, temp_tile, TILE_AREA);
+    memcpy(destination, temp_tile, TILE_AREA);
 }
 
 void create_composites()
 {
-    composite_sprite(sprites[TILE_FLOOR], sprites[ITEM_MINE], sprites[COMP_MINE]);
-    composite_sprite(sprites[TILE_FLOOR], sprites[ITEM_KEY], sprites[COMP_KEY]);
-    composite_sprite(sprites[TILE_FLOOR], sprites[TILE_DOOR_C], sprites[COMP_DOOR_C]);
+    composite_sprite(sprites[TILE_FLOOR].pixels, sprites[TILE_DOOR_C].pixels, sprites[COMP_DOOR_C].pixels);
+    composite_sprite(sprites[TILE_FLOOR].pixels, sprites[ITEM_KEY].pixels, sprites[COMP_KEY].pixels);
+    composite_sprite(sprites[TILE_FLOOR].pixels, sprites[ITEM_MINE].pixels, sprites[COMP_MINE].pixels);
 }
 
 void draw_sprite(int x, int y, uint8_t* sprite)
@@ -253,30 +253,30 @@ void draw_shadow(int x, int y)
         if (TILE_AT(x-1, y-1) == MAP_WALL &&
             TILE_AT(x,   y-1) == MAP_WALL &&
             TILE_AT(x-1, y  ) == MAP_WALL)
-            draw_sprite_tr(pixel_x, pixel_y, sprites[SHAD_IN_COR]);
+            draw_sprite_tr(pixel_x, pixel_y, sprites[SHAD_IN_COR].pixels);
             
         else if (TILE_AT(x, y-1) == MAP_WALL)
-            draw_sprite_tr(pixel_x, pixel_y, sprites[SHAD_HORZ]);
+            draw_sprite_tr(pixel_x, pixel_y, sprites[SHAD_HORZ].pixels);
         
         else if (TILE_AT(x-1, y) == MAP_WALL)
-            draw_sprite_tr(pixel_x, pixel_y, sprites[SHAD_VERT]);
+            draw_sprite_tr(pixel_x, pixel_y, sprites[SHAD_VERT].pixels);
         
         else if (TILE_AT(x-1, y-1) == MAP_WALL)
-            draw_sprite_tr(pixel_x, pixel_y, sprites[SHAD_OUT_COR]);
+            draw_sprite_tr(pixel_x, pixel_y, sprites[SHAD_OUT_COR].pixels);
     }
 
     else if (TILE_AT(x, y) == MAP_MINE)
     {
         if (TILE_AT(x-1, y) == MAP_WALL && TILE_AT(x, y-1) == MAP_WALL)
         {
-            draw_sprite_tr(pixel_x, pixel_y, sprites[SHAD_MINE]);
-            draw_sprite_tr(pixel_x, pixel_y, sprites[SHAD_HORZ]);
+            draw_sprite_tr(pixel_x, pixel_y, sprites[SHAD_MINE].pixels);
+            draw_sprite_tr(pixel_x, pixel_y, sprites[SHAD_HORZ].pixels);
         }
         else if  (TILE_AT(x-1, y) == MAP_WALL)
-            draw_sprite_tr (pixel_x, pixel_y, sprites[SHAD_MINE]);
+            draw_sprite_tr (pixel_x, pixel_y, sprites[SHAD_MINE].pixels);
 
         else if (TILE_AT(x, y-1) == MAP_WALL)
-            draw_sprite_tr(pixel_x, pixel_y, sprites[SHAD_HORZ]);
+            draw_sprite_tr(pixel_x, pixel_y, sprites[SHAD_HORZ].pixels);
     }
 
     else if (TILE_AT(x, y) == MAP_KEY)
@@ -284,14 +284,14 @@ void draw_shadow(int x, int y)
 
         if (TILE_AT(x-1, y) == MAP_WALL && TILE_AT(x, y-1) == MAP_WALL)
         {
-            draw_sprite_tr(pixel_x, pixel_y, sprites[SHAD_KEY]);
-            draw_sprite_tr(pixel_x, pixel_y, sprites[SHAD_HORZ]);
+            draw_sprite_tr(pixel_x, pixel_y, sprites[SHAD_KEY].pixels);
+            draw_sprite_tr(pixel_x, pixel_y, sprites[SHAD_HORZ].pixels);
         }
         else if  (TILE_AT(x-1, y) == MAP_WALL)
-            draw_sprite_tr (pixel_x, pixel_y, sprites[SHAD_KEY]);
+            draw_sprite_tr (pixel_x, pixel_y, sprites[SHAD_KEY].pixels);
 
         else if (TILE_AT(x, y-1) == MAP_WALL)
-            draw_sprite_tr(pixel_x, pixel_y, sprites[SHAD_HORZ]);
+            draw_sprite_tr(pixel_x, pixel_y, sprites[SHAD_HORZ].pixels);
     }
 }
 
@@ -341,20 +341,20 @@ void render_text(int x, int y, char* string, uint8_t color)
 
 void render_floor(int x, int y) // used to empty tiles after an item is picked up
 {
-    draw_sprite     (x * TILE_WIDTH,y * TILE_HEIGHT,sprites[TILE_FLOOR]);
+    draw_sprite     (x * TILE_WIDTH,y * TILE_HEIGHT, sprites[TILE_FLOOR].pixels);
     draw_shadow     (x, y);
 }
 
 void render_door(int x, int y) // used to draw an open door
 {
-    draw_sprite     (x * TILE_WIDTH,y * TILE_HEIGHT, sprites[TILE_FLOOR]);
+    draw_sprite     (x * TILE_WIDTH,y * TILE_HEIGHT, sprites[TILE_FLOOR].pixels);
     draw_shadow     (x, y);
-    draw_sprite_tr  (x * TILE_WIDTH,y * TILE_HEIGHT, sprites[TILE_DOOR_O]);
+    draw_sprite_tr  (x * TILE_WIDTH,y * TILE_HEIGHT, sprites[TILE_DOOR_O].pixels);
 }
 
 void render_mine(int x, int y) // used to draw mines, duh
 {
-    draw_sprite (x * TILE_WIDTH,y * TILE_HEIGHT,sprites[COMP_MINE]);
+    draw_sprite (x * TILE_WIDTH,y * TILE_HEIGHT, sprites[COMP_MINE].pixels);
     draw_shadow (x, y);
 }
 
@@ -435,7 +435,7 @@ void anim_explosion()
     struct Actor p = g.Actors[0];
     uint8_t* pixels;
 
-    p.sprite = explo_sprite;
+    p.sprite = sprites[SPR_EXPLO];
     pixels = p.sprite.pixels;
 
     SET_TILE(p.x, p.y, MAP_FLOOR); // "delete" mine
@@ -463,7 +463,7 @@ void anim_explosion()
     delay(150);
     render_floor(p.x, p.y);
     
-    p.sprite = player_sprite;   
+    p.sprite = sprites[SPR_PLAYER];   
 }
 
 void render_prev_pro(Projectile* proj)
@@ -494,7 +494,7 @@ void render_actors()
     i = 0;
     while (i < g.actor_count)
     {
-        if (pixels == sprites[SPR_ERROR])
+        if (pixels == sprites[SPR_ERROR].pixels)
         {
             i++;
             continue;
@@ -528,13 +528,13 @@ void render_actors()
         
         switch (g.Actors[i].type)
         {
-            case ACTOR_GRAVE:   pixels = sprites[SPR_GRAVE];  break;
-            case ACTOR_EMPTY:   pixels = sprites[SPR_GRAVE];  break;
-            case ACTOR_CORPSE:  pixels = sprites[SPR_CORPSE];  break;
-            default:            pixels = sprites[SPR_ERROR];  break;
+            case ACTOR_GRAVE:   pixels = sprites[SPR_GRAVE].pixels;  break;
+            case ACTOR_EMPTY:   pixels = sprites[SPR_GRAVE].pixels;  break;
+            case ACTOR_CORPSE:  pixels = sprites[SPR_CORPSE].pixels;  break;
+            default:            pixels = sprites[SPR_ERROR].pixels;  break;
         }
         
-        if (pixels == sprites[SPR_ERROR])
+        if (pixels == sprites[SPR_ERROR].pixels)
         {
             i++;
             continue;
@@ -556,7 +556,7 @@ void render_bullets()
     {
         if (bullet_array[i].active == TRUE)
         {
-            bullet_array[i].sprite = bullet_sprite;
+            bullet_array[i].sprite = sprites[SPR_BULLET];
             
             pixels = bullet_array[i].sprite.pixels;
 
@@ -618,13 +618,13 @@ void draw_help_contents()
     g.render_offset_x = 0;
     g.render_offset_y = 0;
     
-    draw_sprite_tr(48, 64, anims[SPR_PLAYER]);
-    draw_sprite(48, 76, sprites[TILE_WALL]);
-    draw_sprite_tr(48, 88, anims[SPR_GUARD]);
-    draw_sprite_tr(48, 100, sprites[ITEM_MINE]);
-    draw_sprite_tr(48, 112, sprites[TILE_DOOR_C]);
-    draw_sprite_tr(48, 124, sprites[ITEM_KEY]);
-    draw_sprite(48, 135,sprites[TILE_EXIT]);
+    draw_sprite_tr(48, 64, sprites[SPR_PLAYER].pixels);
+    draw_sprite(48, 76, sprites[TILE_WALL].pixels);
+    draw_sprite_tr(48, 88, sprites[SPR_GUARD].pixels);
+    draw_sprite_tr(48, 100, sprites[ITEM_MINE].pixels);
+    draw_sprite_tr(48, 112, sprites[TILE_DOOR_C].pixels);
+    draw_sprite_tr(48, 124, sprites[ITEM_KEY].pixels);
+    draw_sprite(48, 135, sprites[TILE_EXIT].pixels);
 }
 
 void change_menu()

@@ -80,7 +80,6 @@ void init()
     printf("OK!\n");
 
     printf("Initialising game data...");
-
     /* init gamedata */
     menu_main();
     init_gamedata();

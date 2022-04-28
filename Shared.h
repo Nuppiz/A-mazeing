@@ -78,17 +78,18 @@
 
 // structs
 
-struct Sprite
+typedef struct
 {
   uint8_t* pixels;
-  int16_t w, h, size, num_frames, frame;
-};
+  uint16_t w, h, size, num_frames, transparency;
+  int16_t frame;
+} Sprite;
 
 struct Actor
 {
   int8_t x, y, x_vel, y_vel, type, old_x, old_y;
   int8_t direction, aim, health;
-  struct Sprite sprite;
+  Sprite sprite;
 };
 
 struct GameData
@@ -161,18 +162,22 @@ typedef struct
   int direction;
   int speed;
   uint8_t damage;
-  struct Sprite sprite;
+  Sprite sprite;
 } Projectile;
 
 enum SPRITES
 {
     TILE_FLOOR,
     TILE_WALL,
+    TILE_EXIT,
     TILE_DOOR_C,
     TILE_DOOR_O,
-    TILE_EXIT,
     ITEM_KEY,
     ITEM_MINE,
+    SPR_PLAYER,
+    SPR_GUARD,
+    SPR_EXPLO,
+    SPR_BULLET,
     SPR_GRAVE,
     SPR_CORPSE,
     SPR_ERROR,
@@ -182,19 +187,10 @@ enum SPRITES
     SHAD_OUT_COR,
     SHAD_MINE,
     SHAD_KEY,
+    COMP_DOOR_C,
     COMP_KEY,
     COMP_MINE,
-    COMP_DOOR_C,
     NUM_SPRITES
-};
-
-enum ANIMS
-{
-    SPR_PLAYER,
-    SPR_GUARD,
-    SPR_EXPLO,
-    SPR_BULLET,
-    NUM_ANIMS
 };
 
 void start_game();
