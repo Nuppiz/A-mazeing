@@ -11,7 +11,11 @@
 #define TILE_AREA           TILE_WIDTH*TILE_HEIGHT
 #define CHARACTER_SIZE      72
 
-#define SET_PIXEL(x,y,color)      screen_buf[(y)*SCREEN_WIDTH + (x)] = color
+#if SCREEN_WIDTH == 320
+#define SET_PIXEL(x,y,color) screen_buf[(((y)<<8)+((y)<<6)) + (x)] = color
+#else
+#define SET_PIXEL(x,y,color) screen_buf[(y)*SCREEN_WIDTH + (x)] = color
+#endif
 
 void set_tile_gfx();
 void set_mode();
@@ -48,4 +52,4 @@ void debug_screen_e();
 void debug_screen_d();
 void render();
 
-#endif
+#endif /* GFX_H */
