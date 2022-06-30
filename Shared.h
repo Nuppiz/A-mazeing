@@ -69,7 +69,7 @@
 #define MOVEMENT_INTERVAL   500
 
 #define FRAME_RATE          10
-#define TICK_RATE           10
+#define TICK_RATE           5
 
 #define CONTROL_8253        0x43
 #define CONTROL_WORD        0x3C

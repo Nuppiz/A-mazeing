@@ -373,7 +373,7 @@ void typewriter(int x, int y, char* string, uint8_t color)
         if (opt.sfx_on == TRUE)
             sound_typing();
         memcpy(VGA,screen_buf,SCREEN_SIZE);
-        delay(100);
+        delay(1000);
         if (x > 311)
         {
             x = old_x;

@@ -47,7 +47,7 @@ void play_note(int freq, int note_length)
     counter = (PIT_FREQ / freq); // calculate frequency
     outportb(0x42, counter & 0xff); // LSB
     outportb(0x42, counter >> 8); // MSB
-    delay(note_length * 1520); // wait for a bit
+    delay(note_length * 1500); // wait for a bit
 
     close_speaker();
 }
@@ -73,7 +73,7 @@ void note_loop_up(int note_length, int min_freq, int max_freq)
         counter = (PIT_FREQ / freq); // calculate frequency
         outportb(0x42, counter & 0xff); // LSB
         outportb(0x42, counter >> 8); // MSB
-        delay(note_length); // wait for a bit
+        delay(note_length * 10); // wait for a bit
     }
 
     close_speaker();
@@ -91,7 +91,7 @@ void note_loop_down(int note_length, int max_freq, int min_freq)
         counter = (PIT_FREQ / freq); // calculate frequency
         outportb(0x42, counter & 0xff); // LSB
         outportb(0x42, counter >> 8); // MSB
-        delay(note_length); // wait for a bit
+        delay(note_length * 10); // wait for a bit
     }
 
     close_speaker();
@@ -149,7 +149,7 @@ void play_sequence()
     {
         if (current_sequence->type == SEQ_MUSIC && opt.music_on == TRUE)
         {
-            if (last_note + current_sequence->duration[song_i] * 12 < System.time)
+            if (last_note + current_sequence->duration[song_i] < System.time)
             {
                 init_speaker();
                 if (song_i >= current_sequence->size)
@@ -174,7 +174,7 @@ void play_sequence()
         }
         else if (current_sequence->type == SEQ_EFFECT && opt.sfx_on == TRUE)
         {
-            if (last_effect + current_sequence->duration[note_i] * 10 < System.time)
+            if (last_effect + current_sequence->duration[note_i] < System.time)
             {
                 init_speaker();
                 if (note_i >= current_sequence->size)
