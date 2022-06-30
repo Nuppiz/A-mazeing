@@ -12,7 +12,7 @@ note_sequence* prev_sequence;
 
 extern struct GameData g;
 extern struct Settings opt;
-extern uint32_t timer;
+extern System_t System;
 uint32_t last_note = 0;
 uint32_t last_effect = 0;
 char song_name [11];
@@ -47,7 +47,7 @@ void play_note(int freq, int note_length)
     counter = (PIT_FREQ / freq); // calculate frequency
     outportb(0x42, counter & 0xff); // LSB
     outportb(0x42, counter >> 8); // MSB
-    delay(note_length); // wait for a bit
+    delay(note_length * 1520); // wait for a bit
 
     close_speaker();
 }
@@ -149,7 +149,7 @@ void play_sequence()
     {
         if (current_sequence->type == SEQ_MUSIC && opt.music_on == TRUE)
         {
-            if (last_note + current_sequence->duration[song_i] * 15 < timer)
+            if (last_note + current_sequence->duration[song_i] * 12 < System.time)
             {
                 init_speaker();
                 if (song_i >= current_sequence->size)
@@ -163,7 +163,7 @@ void play_sequence()
                 }
                 else
                 {
-                    last_note = timer;
+                    last_note = System.time;
                     if (current_sequence->notes[song_i] != 0)
                         sequence_note(current_sequence->notes[song_i]);
                     else
@@ -174,7 +174,7 @@ void play_sequence()
         }
         else if (current_sequence->type == SEQ_EFFECT && opt.sfx_on == TRUE)
         {
-            if (last_effect + current_sequence->duration[note_i] * 15 < timer)
+            if (last_effect + current_sequence->duration[note_i] * 10 < System.time)
             {
                 init_speaker();
                 if (note_i >= current_sequence->size)
@@ -185,7 +185,7 @@ void play_sequence()
                 }
                 else
                 {
-                    last_effect = timer;
+                    last_effect = System.time;
                     if (current_sequence->notes[note_i] != 0)
                     {
                         sequence_note(current_sequence->notes[note_i]);
@@ -272,13 +272,13 @@ void sound_gameover()
     play_note(NOTE_GS4, 270);
     play_note(NOTE_G4, 180);
     play_note(NOTE_D4, 180);
-    play_note(NOTE_E4, 1000);
+    play_note(NOTE_E4, 1200);
     close_speaker();
 }
 
 void sound_typing()
 {    
     init_speaker();
-    play_note(250, 10);
+    play_note(250, 4);
     close_speaker();
 }

@@ -65,8 +65,21 @@
 
 #define LOGIC_INTERVAL      100
 #define RENDER_INTERVAL     10
-#define AUDIO_INTERVAL      75
+#define AUDIO_INTERVAL      750
 #define MOVEMENT_INTERVAL   500
+
+#define FRAME_RATE          10
+#define TICK_RATE           10
+
+#define CONTROL_8253        0x43
+#define CONTROL_WORD        0x3C
+#define COUNTER_0           0x40
+#define TIME_KEEPER_INT     0x1C 
+#define TIMER_18HZ          0xFFFF
+#define TIMER_1000HZ        1193
+
+#define LOW_BYTE(n)         (n & 0x00ff)
+#define HIGH_BYTE(n)        ((n>>8) & 0x00ff)
 
 #define SCREEN_SIZE         64000
 
@@ -164,6 +177,23 @@ typedef struct
   uint8_t damage;
   Sprite sprite;
 } Projectile;
+
+typedef long time_t;
+
+typedef struct
+{
+    int    running;
+    time_t time;        // global timer
+    time_t seconds;     // second timer (time/1000)
+    time_t ticks;       // total game ticks
+    time_t frames;      // total frames drawn
+    time_t tick_time;   // target time interval of logic cycles
+    time_t frame_time;  // target time interval between draws
+    int    tick_rate;   // target rate of logic cycles
+    int    frame_rate;  // target frame rate
+    int    fps;         // actual measured fps
+    float  fps_avg;     // average fps (frames/seconds)
+} System_t;
 
 enum SPRITES
 {

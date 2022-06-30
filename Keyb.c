@@ -131,7 +131,7 @@ void control_menu()
     {
         if (opt.sfx_on == TRUE)
         {
-            play_note(100, 10);
+            play_note(100, 5);
         }
         menu_controller();
     }
@@ -139,14 +139,14 @@ void control_menu()
     else if (KEY_WAS_HIT(KEY_UP))
     {
         if (opt.sfx_on == TRUE)
-            play_note(600, 10);
+            play_note(600, 5);
         cursor_up(opt);
     }
 
     else if (KEY_WAS_HIT(KEY_DOWN))
     {
         if (opt.sfx_on == TRUE)
-            play_note(600, 10);
+            play_note(600, 5);
         cursor_down(opt);
     }
 

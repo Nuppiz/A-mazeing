@@ -11,12 +11,11 @@ union REGS regs;
 
 extern struct GameData g;
 extern struct Settings opt;
-extern uint32_t timer;
-extern int secdiv;
 extern Menu_t* current_menu;
 extern Menu_t mainmenu;
 extern Menu_t optionsmenu;
 extern Projectile bullet_array[];
+extern System_t System;
 
 // reserve memory for sprites
 Sprite sprites[NUM_SPRITES];
@@ -684,19 +683,9 @@ void debug_screen_d()
 
 void render_time()
 {
-    char time_str[12];
-    uint8_t r_seconds;
+    char time_str[50];
 
-    seconds = timer / secdiv; // actual seconds passed
-    r_seconds = seconds - minutes * 60; // rendered seconds
-
-    if (r_seconds >= 60)
-    {
-        minutes++;
-        sprintf(time_str, "TIME: %d:0", minutes);
-    }
-    else
-        sprintf(time_str, "TIME: %d:%d", minutes, r_seconds);
+    sprintf(time_str, "TIME: %ld:%ld", System.seconds/60, System.seconds%60);
         
     draw_rectangle(270, 185, 50, 8, 0);
     render_text(210, 185, time_str, 15);
