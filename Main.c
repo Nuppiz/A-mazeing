@@ -99,8 +99,8 @@ void initSystem()
     System.seconds    = 0;
     System.ticks      = 0;
     System.frames     = 0;
-    System.tick_time  = 1000/TICK_RATE;
-    System.frame_time = 1000/FRAME_RATE;
+    System.tick_interval  = 1000/TICK_RATE;
+    System.frame_interval = 1000/FRAME_RATE;
     System.tick_rate  = TICK_RATE;
     System.frame_rate = FRAME_RATE;
     System.fps        = 0;
@@ -175,7 +175,7 @@ void main()
     /* run game, get keyboard state first */
     while (g.game_running == 1)
     {  
-        if (last_tick + System.tick_time < System.time) // tick
+        if (last_tick + System.tick_interval < System.time) // tick
         {
             do
             {
@@ -184,13 +184,13 @@ void main()
                 process_input();
                 game_logic();
 
-                accumulator -= System.tick_time;
+                accumulator -= System.tick_interval;
                 System.ticks++;
             }
-            while (accumulator >= System.tick_time);
+            while (accumulator >= System.tick_interval);
         }
 
-        if (last_frame + System.frame_time < System.time) // frame
+        if (last_frame + System.frame_interval < System.time) // frame
         {
             last_frame = System.time;
 

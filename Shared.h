@@ -187,8 +187,8 @@ typedef struct
     time_t seconds;     // second timer (time/1000)
     time_t ticks;       // total game ticks
     time_t frames;      // total frames drawn
-    time_t tick_time;   // target time interval of logic cycles
-    time_t frame_time;  // target time interval between draws
+    time_t tick_interval;   // target time interval of logic cycles
+    time_t frame_interval;  // target time interval between draws
     int    tick_rate;   // target rate of logic cycles
     int    frame_rate;  // target frame rate
     int    fps;         // actual measured fps
