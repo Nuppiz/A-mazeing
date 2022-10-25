@@ -164,7 +164,7 @@ void quit()
 void main()
 {
     time_t last_time   = 0; // Used for accumulating seconds & FPS calculation
-    time_t last_tick   = 0; // Tracks time elapsed since last tick started
+    ticks__t last_tick   = 0; // Tracks time elapsed since last tick started
     time_t last_frame  = 0; // Tracks time elapsed since last draw started
     time_t accumulator = 0; // Incremented by frame draw duration, decremented by ticks
     int frame_count    = 0; // Counts frames in a second so far; used by debug

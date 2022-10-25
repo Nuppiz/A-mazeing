@@ -179,13 +179,14 @@ typedef struct
 } Projectile;
 
 typedef long time_t;
+typedef long ticks_t;
 
 typedef struct
 {
     int    running;
     time_t time;        // global timer
     time_t seconds;     // second timer (time/1000)
-    time_t ticks;       // total game ticks
+    ticks_t ticks;       // total game ticks
     time_t frames;      // total frames drawn
     time_t tick_interval;   // target time interval of logic cycles
     time_t frame_interval;  // target time interval between draws
